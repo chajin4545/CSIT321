@@ -7,100 +7,94 @@ import { Link } from 'expo-router';
 export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
-      {/* Hero Section */}
-      <ThemedView style={styles.heroSection}>
-        <ThemedText type="title" style={styles.heroTitle}>
-          Welcome to Our Platform
-        </ThemedText>
-        <ThemedText style={styles.heroSubtitle}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor 
-          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud 
-          exercitation ullamco laboris.
-        </ThemedText>
-        <ThemedView style={styles.ctaButtons}>
-          <TouchableOpacity style={styles.primaryButton}>
-            <ThemedText style={styles.buttonText}>Start Free Trial</ThemedText>
+      <ThemedView style={styles.contentWrapper}>
+        {/* Hero Section */}
+        <ThemedView style={styles.heroSection}>
+          <ThemedText type="title" style={styles.heroTitle}>
+            Campus Buddy
+          </ThemedText>
+          <ThemedText style={styles.heroSubtitle}>
+          CampusBuddy is a friendly chatbot designed to help university students instantly find information about their campus. Built to make student life easier, CampusBuddy acts like your personal campus guide, always ready to answer questions 24/7. 
+          </ThemedText>
+        </ThemedView>
+        
+{/* Features Section */}
+        <ThemedView style={styles.pricingSection}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            Pricing
+          </ThemedText>
+          <ThemedView style={styles.pricingGrid}>
+            <ThemedView style={styles.pricingCard}>
+              <ThemedText type="defaultSemiBold" style={styles.pricingTitle}>
+                Free Plan
+              </ThemedText>
+              <ThemedText style={styles.pricingPrice}>$0/month</ThemedText>
+              <ThemedText style={styles.pricingDescription}>
+                Perfect for getting started with basic features.
+              </ThemedText>
+              <TouchableOpacity style={styles.pricingButton}>
+                <ThemedText style={styles.pricingButtonText}>Sign Up Free</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
+            <ThemedView style={[styles.pricingCard, styles.premiumCard]}>
+              <ThemedText type="defaultSemiBold" style={styles.pricingTitle}>
+                Premium Plan
+              </ThemedText>
+              <ThemedText style={styles.pricingPrice}>$29/month</ThemedText>
+              <ThemedText style={styles.pricingDescription}>
+                Unlock advanced features
+              </ThemedText>
+              <TouchableOpacity style={styles.premiumButton}>
+                <ThemedText style={styles.premiumButtonText}>Subscribe Now</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
+          </ThemedView>
+        </ThemedView>
+
+        {/* Features Section */}
+        <ThemedView style={styles.featuresSection}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            Important Features
+          </ThemedText>
+          <ThemedView style={styles.featureGrid}>
+            <ThemedView style={styles.featureCard}>
+              <ThemedText type="defaultSemiBold" style={styles.featureTitle}>
+                Ask about module information
+              </ThemedText>
+              <ThemedText style={styles.featureDescription}>
+                Quickly get details about any module from course codes and descriptions to lecturer names and assessment breakdowns.
+              </ThemedText>
+            </ThemedView>
+            <ThemedView style={styles.featureCard}>
+              <ThemedText type="defaultSemiBold" style={styles.featureTitle}>
+                Campus Location Guide
+              </ThemedText>
+              <ThemedText style={styles.featureDescription}>
+                Lost on campus? Simply ask where a building or lab is, and CampusBuddy will point you in the right direction with clear directions or room info.
+              </ThemedText>
+            </ThemedView>
+            <ThemedView style={styles.featureCard}>
+              <ThemedText type="defaultSemiBold" style={styles.featureTitle}>
+                Exam & Event Scheduler
+              </ThemedText>
+              <ThemedText style={styles.featureDescription}>
+                Never miss an important date again. CampusBuddy can share upcoming exam timetables, key deadlines, and campus events in seconds.
+              </ThemedText>
+            </ThemedView>
+          </ThemedView>
+        </ThemedView>
+
+        
+
+        {/* Footer */}
+        <ThemedView style={styles.footer}>
+          <ThemedText style={styles.footerText}>
+            Ready to get started? Contact us today!
+          </ThemedText>
+          <TouchableOpacity style={styles.contactButton}>
+            <ThemedText style={styles.contactButtonText}>Contact Us</ThemedText>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton}>
-            <ThemedText style={styles.secondaryButtonText}>Request Demo</ThemedText>
-          </TouchableOpacity>
         </ThemedView>
-      </ThemedView>
-
-      {/* Features Section */}
-      <ThemedView style={styles.featuresSection}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
-          Why Choose Us?
-        </ThemedText>
-        <ThemedView style={styles.featureGrid}>
-          <ThemedView style={styles.featureCard}>
-            <ThemedText type="defaultSemiBold" style={styles.featureTitle}>
-              Feature One
-            </ThemedText>
-            <ThemedText style={styles.featureDescription}>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
-            </ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.featureCard}>
-            <ThemedText type="defaultSemiBold" style={styles.featureTitle}>
-              Feature Two
-            </ThemedText>
-            <ThemedText style={styles.featureDescription}>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
-            </ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.featureCard}>
-            <ThemedText type="defaultSemiBold" style={styles.featureTitle}>
-              Feature Three
-            </ThemedText>
-            <ThemedText style={styles.featureDescription}>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
-            </ThemedText>
-          </ThemedView>
-        </ThemedView>
-      </ThemedView>
-
-      {/* Pricing Section */}
-      <ThemedView style={styles.pricingSection}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
-          Choose Your Plan
-        </ThemedText>
-        <ThemedView style={styles.pricingGrid}>
-          <ThemedView style={styles.pricingCard}>
-            <ThemedText type="defaultSemiBold" style={styles.pricingTitle}>
-              Free Plan
-            </ThemedText>
-            <ThemedText style={styles.pricingPrice}>$0/month</ThemedText>
-            <ThemedText style={styles.pricingDescription}>
-              Perfect for getting started with basic features.
-            </ThemedText>
-            <TouchableOpacity style={styles.pricingButton}>
-              <ThemedText style={styles.pricingButtonText}>Sign Up Free</ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
-          <ThemedView style={[styles.pricingCard, styles.premiumCard]}>
-            <ThemedText type="defaultSemiBold" style={styles.pricingTitle}>
-              Premium Plan
-            </ThemedText>
-            <ThemedText style={styles.pricingPrice}>$29/month</ThemedText>
-            <ThemedText style={styles.pricingDescription}>
-              Advanced features for growing businesses.
-            </ThemedText>
-            <TouchableOpacity style={styles.premiumButton}>
-              <ThemedText style={styles.premiumButtonText}>Subscribe Now</ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
-        </ThemedView>
-      </ThemedView>
-
-      {/* Footer */}
-      <ThemedView style={styles.footer}>
-        <ThemedText style={styles.footerText}>
-          Ready to get started? Contact us today!
-        </ThemedText>
-        <TouchableOpacity style={styles.contactButton}>
-          <ThemedText style={styles.contactButtonText}>Contact Us</ThemedText>
-        </TouchableOpacity>
       </ThemedView>
     </ScrollView>
   );
@@ -109,13 +103,19 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'white',
+  },
+  contentWrapper: {
+    maxWidth: 1200,
+    alignSelf: 'center',
+    width: '100%',
   },
   heroSection: {
     padding: 20,
+    paddingTop: 60,
+    paddingBottom: 40,
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    minHeight: 400,
-    justifyContent: 'center',
+    backgroundColor: 'white',
   },
   heroTitle: {
     fontSize: 32,
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   heroSubtitle: {
     fontSize: 18,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 0,
     lineHeight: 24,
     maxWidth: 600,
   },
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   featureCard: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'white',
     padding: 20,
     borderRadius: 12,
     borderWidth: 1,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   pricingSection: {
     padding: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'white',
   },
   pricingGrid: {
     flexDirection: 'row',
@@ -208,7 +208,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e9ecef',
+    flex: 1,
     minWidth: 250,
+    maxWidth: 400,
     alignItems: 'center',
   },
   premiumCard: {
@@ -259,11 +261,11 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 40,
-    backgroundColor: '#343a40',
+    backgroundColor: 'white',
     alignItems: 'center',
   },
   footerText: {
-    color: 'white',
+    color: '#333',
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,

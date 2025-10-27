@@ -1,4 +1,4 @@
-import { StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
@@ -6,51 +6,27 @@ export default function DocsScreen() {
   const documents = [
     {
       id: 1,
-      title: 'Project Requirements',
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-      status: 'In Progress',
-      lastUpdated: '2024-01-15',
-      category: 'Planning'
+      title: 'Reaearch',
+      status: 'Completed',
+      lastUpdated: '2025-10-25',
+      category: 'Week 3',
+      link: 'https://docs.google.com/document/d/1dOvatpYmA299Eyq3zldiLjh0pVMhu-y6mnzBlsXlhx8/edit?tab=t.0'
     },
     {
       id: 2,
-      title: 'Technical Architecture',
-      description: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+      title: 'Swot Analysis',
       status: 'Completed',
-      lastUpdated: '2024-01-10',
-      category: 'Technical'
+      lastUpdated: '2025-10-25',
+      category: 'Week 3',
+      link: 'https://docs.google.com/document/d/1BOHzxKVc5KJJioJeuc1av_B3c6Ic0vrL1Cl1N2F2DPw/edit?tab=t.m64s5m97g6t5'
     },
     {
       id: 3,
-      title: 'User Interface Design',
-      description: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
-      status: 'Review',
-      lastUpdated: '2024-01-12',
-      category: 'Design'
-    },
-    {
-      id: 4,
-      title: 'API Documentation',
-      description: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-      status: 'Draft',
-      lastUpdated: '2024-01-08',
-      category: 'Technical'
-    },
-    {
-      id: 5,
-      title: 'Testing Strategy',
-      description: 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.',
-      status: 'In Progress',
-      lastUpdated: '2024-01-14',
-      category: 'Quality'
-    },
-    {
-      id: 6,
-      title: 'Deployment Guide',
-      description: 'Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt.',
-      status: 'Pending',
-      lastUpdated: '2024-01-05',
-      category: 'Operations'
+      title: 'Literature Review',
+      status: 'Completed',
+      lastUpdated: '2025-10-25',
+      category: 'Week 3',
+      link: 'https://docs.google.com/document/d/16gK1IasgGk4vFdMaSwZKyyYPdIHxRmq4MseNa-MHN9c/edit?tab=t.0#heading=h.sy3lc4uat2ow'
     }
   ];
 
@@ -67,80 +43,60 @@ export default function DocsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.headerTitle}>
-          Project Documentation
-        </ThemedText>
-        <ThemedText style={styles.headerSubtitle}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor 
-          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.
-        </ThemedText>
-      </ThemedView>
-
-      <ThemedView style={styles.docsContainer}>
-        <ThemedView style={styles.filterSection}>
-          <ThemedText type="subtitle" style={styles.filterTitle}>
-            Filter by Category
+      <ThemedView style={styles.contentWrapper}>
+        <ThemedView style={styles.header}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            Project Documentation
           </ThemedText>
-          <ThemedView style={styles.filterButtons}>
-            <TouchableOpacity style={styles.filterButton}>
-              <ThemedText style={styles.filterButtonText}>All</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.filterButton}>
-              <ThemedText style={styles.filterButtonText}>Planning</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.filterButton}>
-              <ThemedText style={styles.filterButtonText}>Technical</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.filterButton}>
-              <ThemedText style={styles.filterButtonText}>Design</ThemedText>
-            </TouchableOpacity>
+          <ThemedText style={styles.headerSubtitle}>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor 
+            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.
+          </ThemedText>
+        </ThemedView>
+
+        <ThemedView style={styles.docsContainer}>
+          <ThemedView style={styles.docsList}>
+            {documents.map((doc) => (
+              <ThemedView key={doc.id} style={styles.docCard}>
+                <ThemedView style={styles.docHeader}>
+                  <ThemedText type="defaultSemiBold" style={styles.docTitle}>
+                    {doc.title}
+                  </ThemedText>
+                  <ThemedView style={[styles.statusBadge, { backgroundColor: getStatusColor(doc.status) }]}>
+                    <ThemedText style={styles.statusText}>
+                      {doc.status}
+                    </ThemedText>
+                  </ThemedView>
+                </ThemedView>
+                <ThemedView style={styles.docFooter}>
+                  <ThemedView style={styles.docMeta}>
+                    <ThemedText style={styles.categoryText}>
+                      {doc.category}
+                    </ThemedText>
+                    <ThemedText style={styles.dateText}>
+                      Updated: {doc.lastUpdated}
+                    </ThemedText>
+                  </ThemedView>
+                  <TouchableOpacity 
+                    style={styles.viewButton}
+                    onPress={() => Linking.openURL(doc.link)}
+                  >
+                    <ThemedText style={styles.viewButtonText}>View Document</ThemedText>
+                  </TouchableOpacity>
+                </ThemedView>
+              </ThemedView>
+            ))}
           </ThemedView>
         </ThemedView>
 
-        <ThemedView style={styles.docsList}>
-          {documents.map((doc) => (
-            <ThemedView key={doc.id} style={styles.docCard}>
-              <ThemedView style={styles.docHeader}>
-                <ThemedText type="defaultSemiBold" style={styles.docTitle}>
-                  {doc.title}
-                </ThemedText>
-                <ThemedView style={[styles.statusBadge, { backgroundColor: getStatusColor(doc.status) }]}>
-                  <ThemedText style={styles.statusText}>
-                    {doc.status}
-                  </ThemedText>
-                </ThemedView>
-              </ThemedView>
-              
-              <ThemedText style={styles.docDescription}>
-                {doc.description}
-              </ThemedText>
-              
-              <ThemedView style={styles.docFooter}>
-                <ThemedView style={styles.docMeta}>
-                  <ThemedText style={styles.categoryText}>
-                    {doc.category}
-                  </ThemedText>
-                  <ThemedText style={styles.dateText}>
-                    Updated: {doc.lastUpdated}
-                  </ThemedText>
-                </ThemedView>
-                <TouchableOpacity style={styles.viewButton}>
-                  <ThemedText style={styles.viewButtonText}>View Document</ThemedText>
-                </TouchableOpacity>
-              </ThemedView>
-            </ThemedView>
-          ))}
+          <ThemedView style={styles.footer}>
+          <ThemedText style={styles.footerText}>
+            Need to add a new document? Contact the project manager.
+          </ThemedText>
+          <TouchableOpacity style={styles.addButton}>
+            <ThemedText style={styles.addButtonText}>Add New Document</ThemedText>
+          </TouchableOpacity>
         </ThemedView>
-      </ThemedView>
-
-      <ThemedView style={styles.footer}>
-        <ThemedText style={styles.footerText}>
-          Need to add a new document? Contact the project manager.
-        </ThemedText>
-        <TouchableOpacity style={styles.addButton}>
-          <ThemedText style={styles.addButtonText}>Add New Document</ThemedText>
-        </TouchableOpacity>
       </ThemedView>
     </ScrollView>
   );
@@ -149,11 +105,17 @@ export default function DocsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'white',
+  },
+  contentWrapper: {
+    maxWidth: 1920,
+    alignSelf: 'center',
+    width: '100%',
   },
   header: {
     padding: 20,
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'white',
     minHeight: 200,
     justifyContent: 'center',
   },
@@ -171,29 +133,6 @@ const styles = StyleSheet.create({
   },
   docsContainer: {
     padding: 20,
-  },
-  filterSection: {
-    marginBottom: 24,
-  },
-  filterTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  filterButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  filterButton: {
-    backgroundColor: '#e9ecef',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  filterButtonText: {
-    fontSize: 14,
-    color: '#495057',
   },
   docsList: {
     gap: 16,
@@ -271,11 +210,11 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 40,
-    backgroundColor: '#343a40',
+    backgroundColor: 'white',
     alignItems: 'center',
   },
   footerText: {
-    color: 'white',
+    color: '#333',
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,
