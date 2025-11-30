@@ -1,6 +1,10 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
-
+env:
+  AZURE_WEBAPP_NAME: CampusBuddy
+  AZURE_WEBAPP_PACKAGE_PATH: 'my-rn-web'
+  NODE_VERSION: '20.x'
+  
 name: Build and deploy Node.js app to Azure Web App - CampusBuddy
 
 on:
@@ -65,3 +69,4 @@ jobs:
           package: .
 
           
+
