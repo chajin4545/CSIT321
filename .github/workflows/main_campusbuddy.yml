@@ -76,6 +76,5 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          # we uploaded a zip named 'node-app.zip' inside the artifact
-          # download-artifact will extract it to './node-app/node-app.zip'
-          package: ./node-app/node-app.zip
+          # download-artifact extracted the zip directly to the workspace root
+          package: ./node-app.zip
