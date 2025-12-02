@@ -31,7 +31,7 @@ jobs:
         working-directory: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}   # <--- frontend
         run: |
           npm install
-          npm run build:web          # <--- build Expo web export
+          npm run build
           npm run test --if-present
 
       - name: Upload artifact for deployment job
