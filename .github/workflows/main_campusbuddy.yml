@@ -67,4 +67,7 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          package: ./frontend
+          # actions/download-artifact extracts the artifact into a folder
+          # named after the artifact (here: 'node-app'), so the frontend
+          # content ends up at './node-app/frontend'. Point package there.
+          package: ./node-app/frontend
