@@ -59,6 +59,9 @@ jobs:
         with:
           name: node-app
           path: .   # extracts frontend/ into the workspace root
+
+      - name: List extracted artifact files
+        run: ls -la && echo "---" && ls -la node-app || true
       
       - name: Login to Azure
         uses: azure/login@v2
