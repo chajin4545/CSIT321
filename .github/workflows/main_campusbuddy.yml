@@ -70,6 +70,7 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          # download-artifact extracts artifact into folder named after artifact
-          # so 'frontend' contents end up at './node-app/frontend'
-          package: ./node-app/frontend
+          # the download step extracted the artifact contents into the
+          # workspace root (you can see server.js and dist/ at root),
+          # so deploy the workspace root.
+          package: ./
