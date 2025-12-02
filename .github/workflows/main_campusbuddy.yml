@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 env:
   AZURE_WEBAPP_NAME: CampusBuddy
-  AZURE_WEBAPP_PACKAGE_PATH: 'my-rn-web'
+  AZURE_WEBAPP_PACKAGE_PATH: 'frontend'   # <--- was my-rn-web
   NODE_VERSION: '20.x'
   
 name: Build and deploy Node.js app to Azure Web App - CampusBuddy
@@ -25,20 +25,20 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '24.x'
+          node-version: ${{ env.NODE_VERSION }}   # <--- use env
 
       - name: npm install, build, and test
-        working-directory: my-rn-web
+        working-directory: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}   # <--- frontend
         run: |
           npm install
-          npm run build --if-present
+          npm run build:web          # <--- build Expo web export
           npm run test --if-present
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}  # <--- only frontend
 
   deploy:
     runs-on: ubuntu-latest
@@ -52,6 +52,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
+          path: .   # extracts frontend/ into the workspace root
       
       - name: Login to Azure
         uses: azure/login@v2
@@ -60,13 +61,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C0B709B8F6CB46D09D4669369CF3ABEC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B3C79CC4D7A044D59F09BC93CC45917D }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'CampusBuddy'
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          package: .
-
-          
-
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}  # <--- deploy frontend/
