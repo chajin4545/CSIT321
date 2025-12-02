@@ -34,11 +34,17 @@ jobs:
           npm run build
           npm run test --if-present
 
+      - name: Zip frontend
+        # create a single zip artifact containing the built frontend
+        working-directory: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        run: |
+          zip -r ../node-app.zip .
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}  # <--- only frontend
+          path: node-app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -67,7 +73,6 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          # actions/download-artifact extracts the artifact into a folder
-          # named after the artifact (here: 'node-app'), so the frontend
-          # content ends up at './node-app/frontend'. Point package there.
-          package: ./node-app/frontend
+          # we uploaded a zip named 'node-app.zip' inside the artifact
+          # download-artifact will extract it to './node-app/node-app.zip'
+          package: ./node-app/node-app.zip
