@@ -35,10 +35,11 @@ jobs:
           npm run test --if-present
 
       - name: Zip frontend
-        # create a single zip artifact containing the built frontend
-        working-directory: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        # create a zip with contents at root (no nested frontend/)
+        # so when extracted to wwwroot, dist/ and server.js are directly there
+        working-directory: frontend
         run: |
-          zip -r ../node-app.zip .
+          zip -r ../node-app.zip . -x "node_modules/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
