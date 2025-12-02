@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 env:
   AZURE_WEBAPP_NAME: CampusBuddy
-  AZURE_WEBAPP_PACKAGE_PATH: 'frontend'   # <--- was my-rn-web
+  AZURE_WEBAPP_PACKAGE_PATH: 'frontend'
   NODE_VERSION: '20.x'
   
 name: Build and deploy Node.js app to Azure Web App - CampusBuddy
@@ -67,4 +67,4 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}  # <--- deploy frontend/
+          package: . 
