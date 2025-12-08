@@ -1,95 +1,112 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, View, TouchableOpacity, Linking } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
 export default function HomeScreen() {
+  const features = [
+    {
+      role: 'Guest',
+      icon: '👤',
+      items: [
+        'Ask simple questions to Chatbot',
+        'View upcoming campus events',
+        'Access Campus Map & locations'
+      ]
+    },
+    {
+      role: 'Student',
+      icon: '🎓',
+      items: [
+        'Admin Chatbot: Check exams & timetables',
+        'Knowledge Base: Study help & assignments',
+        'Access Professor Announcements'
+      ]
+    },
+    {
+      role: 'Professor',
+      icon: '👨‍🏫',
+      items: [
+        'View Teaching Schedule & Class Lists',
+        'Upload Documents for Knowledge Base',
+        'Post Announcements'
+      ]
+    },
+    {
+      role: 'School Admin',
+      icon: '🏛️',
+      items: [
+        'Manage Teaching & Exam Schedules',
+        'Create & Edit Campus Events',
+        'Manage Accounts (Prof/Student)'
+      ]
+    },
+    {
+      role: 'Sys Admin',
+      icon: '⚙️',
+      items: [
+        'View Usage Analytics',
+        'View User Feedback',
+        'Manage School Admin Accounts'
+      ]
+    }
+  ];
+
   return (
     <ScrollView style={styles.container}>
       <ThemedView style={styles.contentWrapper}>
         {/* Hero Section */}
-        <ThemedView style={styles.heroSection}>
-          <ThemedText type="title" style={styles.heroTitle}>
-            Campus Buddy
+        <ThemedView style={styles.header}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            Welcome to CampusBuddy
           </ThemedText>
-          <ThemedText style={styles.heroSubtitle}>
-          CampusBuddy is a friendly chatbot designed to help university students instantly find information about their campus. Built to make student life easier, CampusBuddy acts like your personal campus guide, always ready to answer questions 24/7. 
+          <ThemedText style={styles.headerSubtitle}>
+            Your All-in-One University Companion. Bridging distributed systems to help you study smarter and navigate campus life with ease.
           </ThemedText>
-        </ThemedView>
-        
-{/* Features Section */}
-        <ThemedView style={styles.pricingSection}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Pricing
-          </ThemedText>
-          <ThemedView style={styles.pricingGrid}>
-            <ThemedView style={styles.pricingCard}>
-              <ThemedText type="defaultSemiBold" style={styles.pricingTitle}>
-                Free Plan
-              </ThemedText>
-              <ThemedText style={styles.pricingPrice}>$0/month</ThemedText>
-              <ThemedText style={styles.pricingDescription}>
-                Perfect for getting started with basic features.
-              </ThemedText>
-              <TouchableOpacity style={styles.pricingButton}>
-                <ThemedText style={styles.pricingButtonText}>Sign Up Free</ThemedText>
-              </TouchableOpacity>
-            </ThemedView>
-            <ThemedView style={[styles.pricingCard, styles.premiumCard]}>
-              <ThemedText type="defaultSemiBold" style={styles.pricingTitle}>
-                Premium Plan
-              </ThemedText>
-              <ThemedText style={styles.pricingPrice}>$29/month</ThemedText>
-              <ThemedText style={styles.pricingDescription}>
-                Unlock advanced features
-              </ThemedText>
-              <TouchableOpacity style={styles.premiumButton}>
-                <ThemedText style={styles.premiumButtonText}>Subscribe Now</ThemedText>
-              </TouchableOpacity>
-            </ThemedView>
-          </ThemedView>
+          <View style={styles.heroButtons}>
+            <TouchableOpacity 
+              style={styles.primaryButton}
+              onPress={() => Linking.openURL('/prototype/')}
+            >
+              <ThemedText style={styles.primaryButtonText}>Try Prototype</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.secondaryButton}>
+              <ThemedText style={styles.secondaryButtonText}>Learn More</ThemedText>
+            </TouchableOpacity>
+          </View>
         </ThemedView>
 
         {/* Features Section */}
-        <ThemedView style={styles.featuresSection}>
+        <ThemedView style={styles.sectionContainer}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Important Features
+            Tailored Features for Everyone
           </ThemedText>
-          <ThemedView style={styles.featureGrid}>
-            <ThemedView style={styles.featureCard}>
-              <ThemedText type="defaultSemiBold" style={styles.featureTitle}>
-                Ask about module information
-              </ThemedText>
-              <ThemedText style={styles.featureDescription}>
-                Quickly get details about any module from course codes and descriptions to lecturer names and assessment breakdowns.
-              </ThemedText>
-            </ThemedView>
-            <ThemedView style={styles.featureCard}>
-              <ThemedText type="defaultSemiBold" style={styles.featureTitle}>
-                Campus Location Guide
-              </ThemedText>
-              <ThemedText style={styles.featureDescription}>
-                Lost on campus? Simply ask where a building or lab is, and CampusBuddy will point you in the right direction with clear directions or room info.
-              </ThemedText>
-            </ThemedView>
-            <ThemedView style={styles.featureCard}>
-              <ThemedText type="defaultSemiBold" style={styles.featureTitle}>
-                Exam & Event Scheduler
-              </ThemedText>
-              <ThemedText style={styles.featureDescription}>
-                Never miss an important date again. CampusBuddy can share upcoming exam timetables, key deadlines, and campus events in seconds.
-              </ThemedText>
-            </ThemedView>
-          </ThemedView>
+          
+          <View style={styles.featuresGrid}>
+            {features.map((feature, index) => (
+              <ThemedView key={index} style={styles.featureCard}>
+                <View style={styles.cardHeader}>
+                  <ThemedText style={styles.featureIcon}>{feature.icon}</ThemedText>
+                  <ThemedText type="defaultSemiBold" style={styles.featureRole}>
+                    {feature.role}
+                  </ThemedText>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.featureList}>
+                  {feature.items.map((item, idx) => (
+                    <ThemedText key={idx} style={styles.featureItem}>
+                      • {item}
+                    </ThemedText>
+                  ))}
+                </View>
+              </ThemedView>
+            ))}
+          </View>
         </ThemedView>
 
-        
-
-        {/* Footer */}
+        {/* Call to Action Footer */}
         <ThemedView style={styles.footer}>
           <ThemedText style={styles.footerText}>
-            Ready to get started? Contact us today!
+            Ready to transform your university experience?
           </ThemedText>
           <TouchableOpacity style={styles.contactButton}>
             <ThemedText style={styles.contactButtonText}>Contact Us</ThemedText>
@@ -106,179 +123,145 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   contentWrapper: {
-    maxWidth: 1200,
+    maxWidth: 1920,
     alignSelf: 'center',
     width: '100%',
   },
-  heroSection: {
-    padding: 20,
-    paddingTop: 60,
-    paddingBottom: 40,
+  header: {
+    padding: 40,
     alignItems: 'center',
     backgroundColor: 'white',
+    minHeight: 300,
+    justifyContent: 'center',
   },
-  heroTitle: {
-    fontSize: 32,
+  headerTitle: {
+    fontSize: 48,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
+    color: '#1a1a1a',
   },
-  heroSubtitle: {
-    fontSize: 18,
+  headerSubtitle: {
+    fontSize: 20,
     textAlign: 'center',
-    marginBottom: 0,
-    lineHeight: 24,
-    maxWidth: 600,
+    lineHeight: 30,
+    maxWidth: 800,
+    color: '#666',
+    marginBottom: 40,
   },
-  ctaButtons: {
+  heroButtons: {
     flexDirection: 'row',
     gap: 16,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
   },
   primaryButton: {
     backgroundColor: '#007bff',
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 8,
-    minWidth: 150,
+    elevation: 2,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'white',
     borderWidth: 2,
     borderColor: '#007bff',
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 8,
-    minWidth: 150,
   },
-  buttonText: {
+  primaryButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center',
   },
   secondaryButtonText: {
     color: '#007bff',
     fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center',
   },
-  featuresSection: {
-    padding: 20,
-    backgroundColor: 'white',
+  sectionContainer: {
+    padding: 40,
+    backgroundColor: '#f8f9fa',
   },
   sectionTitle: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 48,
+    color: '#333',
   },
-  featureGrid: {
-    gap: 20,
+  featuresGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 24,
   },
   featureCard: {
     backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  featureTitle: {
-    fontSize: 18,
-    marginBottom: 8,
-  },
-  featureDescription: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  pricingSection: {
-    padding: 20,
-    backgroundColor: 'white',
-  },
-  pricingGrid: {
-    flexDirection: 'row',
-    gap: 20,
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-  },
-  pricingCard: {
-    backgroundColor: 'white',
     padding: 24,
-    borderRadius: 12,
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 350,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
     borderWidth: 1,
-    borderColor: '#e9ecef',
-    flex: 1,
-    minWidth: 250,
-    maxWidth: 400,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  cardHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  premiumCard: {
-    borderColor: '#007bff',
-    borderWidth: 2,
-  },
-  pricingTitle: {
-    fontSize: 20,
-    marginBottom: 8,
-  },
-  pricingPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007bff',
     marginBottom: 16,
   },
-  pricingDescription: {
+  featureIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  featureRole: {
+    fontSize: 24,
+    color: '#007bff',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e9ecef',
+    marginBottom: 16,
+  },
+  featureList: {
+    gap: 12,
+  },
+  featureItem: {
     fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  pricingButton: {
-    backgroundColor: '#6c757d',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 6,
-    width: '100%',
-  },
-  premiumButton: {
-    backgroundColor: '#007bff',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 6,
-    width: '100%',
-  },
-  pricingButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  premiumButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    lineHeight: 24,
+    color: '#495057',
   },
   footer: {
-    padding: 40,
+    padding: 60,
     backgroundColor: 'white',
     alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
   },
   footerText: {
     color: '#333',
-    fontSize: 18,
+    fontSize: 24,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    fontWeight: '500',
   },
   contactButton: {
-    backgroundColor: '#007bff',
-    paddingHorizontal: 32,
+    backgroundColor: '#28a745',
+    paddingHorizontal: 40,
     paddingVertical: 16,
     borderRadius: 8,
+    elevation: 2,
   },
   contactButtonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

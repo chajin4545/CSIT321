@@ -1,8 +1,7 @@
 {
   "expo": {
-    "name": "my-rn-web",
-    "slug": "my-rn-web",
-    "version": "1.0.0",
+      "name": "CampusBuddy",
+      "slug": "CampusBuddy",    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myrnweb",

@@ -26,6 +26,11 @@ const publicPath = path.join(__dirname, staticDir);
 // Serve static files
 app.use(express.static(publicPath));
 
+// Prototype SPA fallback
+app.use('/prototype', (req, res) => {
+  res.sendFile(path.join(publicPath, 'prototype', 'index.html'));
+});
+
 // Fallback route for SPA (no "*" pattern)
 app.use((req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
