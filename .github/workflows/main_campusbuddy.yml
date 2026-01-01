@@ -1,8 +1,6 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
 env:
   AZURE_WEBAPP_NAME: CampusBuddy
-  AZURE_WEBAPP_PACKAGE_PATH: 'frontend'
+  AZURE_WEBAPP_PACKAGE_PATH: 'intro-fe' # Reverted to intro-fe as entry point
   NODE_VERSION: '20.x'
   
 name: Build and deploy Node.js app to Azure Web App - CampusBuddy
@@ -17,7 +15,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -27,42 +25,55 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install Prototype Dependencies
-        working-directory: prototype
+      # 1. Build the Main App (campus-buddy-fe)
+      - name: Build Campus Buddy App
+        working-directory: campus-buddy-fe
         run: |
           npm install
           npm run build
 
-      - name: npm install, build, and test
-        working-directory: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+      # 2. Build the Landing Page / Entry Point (intro-fe)
+      - name: Build Intro Page
+        working-directory: intro-fe
         run: |
           npm install
-          npm run build
-          npm run test --if-present
+          npm run build:expo
+          # Note: 'npm run build:expo' creates 'dist' folder
+
+      # 3. Integrate Apps & Backend
+      - name: Integrate Backend and Frontend
+        run: |
+          # Move Campus Buddy Build into Intro-FE's dist folder
+          mkdir -p intro-fe/dist/campus-buddy-fe
+          cp -r campus-buddy-fe/dist/* intro-fe/dist/campus-buddy-fe/
+          
+          # Copy Backend Code into Intro-FE folder (so server.js can find it)
+          cp -r backend intro-fe/backend
+
+      - name: Install Production Deps for Merged App
+        working-directory: intro-fe
+        run: npm install --omit=dev
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: frontend
+          path: intro-fe
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          path: .   # extracts frontend/ into the workspace root
+          path: .   # extracts intro-fe/ into the workspace root
 
-      - name: List extracted artifact files
-        run: ls -la && echo "---" && ls -la node-app || true
-      
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -76,7 +87,4 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          # the download step extracted the artifact contents into the
-          # workspace root (you can see server.js and dist/ at root),
-          # so deploy the workspace root.
           package: ./
