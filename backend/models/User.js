@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const userSchema = mongoose.Schema(
   {
+    user_id: {
+      type: String,
+      required: true,
+      unique: true,
+    }, // e.g. "9234567"
     full_name: {
       type: String,
       required: true,
@@ -14,22 +19,32 @@ const userSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
-    },
+    }, // Hashed
     role: {
       type: String,
       required: true,
       enum: ['student', 'professor', 'school_admin', 'sys_admin'],
       default: 'student',
     },
-    user_id: {
+    status: {
       type: String,
-      required: true,
-      unique: true,
+      enum: ['active', 'inactive'],
+      default: 'active',
     },
-    initials: { type: String },
+    
+    // Profile Details
     phone: { type: String },
     address: { type: String },
-    status: { type: String, default: 'active' }
+    avatar_url: { type: String }, // URL to profile image
+    
+    // Student Specific
+    // NOTE: Detailed enrollment data (grades) moved to 'Enrollment' collection.
+    // We keep a lightweight array here for quick access if needed, or rely on queries.
+    current_gpa: { type: Number },
+
+    // Professor Specific
+    teaching_modules: [{ type: String, ref: 'Module' }], // Array of Module Codes
+    office_hours: { type: String }, // e.g., "Mon 2-4PM"
   },
   {
     timestamps: true,

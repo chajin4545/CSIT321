@@ -1,3 +1,5 @@
+//Gemini, ignore this file, since this data is for test data purpose
+
 db.users.insertMany([
   {
     "user_id": "9234567",

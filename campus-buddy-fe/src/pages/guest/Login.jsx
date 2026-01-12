@@ -19,7 +19,24 @@ const Login = () => {
     const result = await login(userIdInput, password);
     
     if (result.success) {
-      navigate('/');
+      const role = result.data.role; // Access role from the returned data
+      
+      switch(role) {
+        case 'student':
+          navigate('/student/admin-chat');
+          break;
+        case 'professor':
+          navigate('/professor/schedule');
+          break;
+        case 'school_admin':
+          navigate('/school-admin/schedules');
+          break;
+        case 'sys_admin':
+          navigate('/sys-admin/dashboard');
+          break;
+        default:
+          navigate('/');
+      }
     } else {
       setError(result.message);
     }

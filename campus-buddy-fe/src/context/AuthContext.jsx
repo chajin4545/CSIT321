@@ -4,12 +4,14 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // { name, role, initials, id, token ... }
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const userInfo = localStorage.getItem('userInfo');
     if (userInfo) {
       setUser(JSON.parse(userInfo));
     }
+    setLoading(false);
   }, []);
 
   const login = async (userId, password) => {
@@ -27,7 +29,7 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         setUser(data);
         localStorage.setItem('userInfo', JSON.stringify(data));
-        return { success: true };
+        return { success: true, data };
       } else {
         return { success: false, message: data.message || 'Login failed' };
       }
@@ -43,7 +45,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

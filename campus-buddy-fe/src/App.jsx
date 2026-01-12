@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import MainLayout from './layouts/MainLayout';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Guest Pages
 import Home from './pages/guest/Home';
@@ -49,30 +50,40 @@ const App = () => {
             <Route path="guest/chat" element={<Chat />} />
             
             {/* Student Routes */}
-            <Route path="student/admin-chat" element={<AdminChat />} />
-            <Route path="student/course-chat" element={<CourseChat />} />
-            <Route path="student/announcements" element={<StudentAnnouncements />} />
-            <Route path="student/review" element={<Review />} />
+            <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+              <Route path="student/admin-chat" element={<AdminChat />} />
+              <Route path="student/course-chat" element={<CourseChat />} />
+              <Route path="student/announcements" element={<StudentAnnouncements />} />
+              <Route path="student/review" element={<Review />} />
+            </Route>
 
             {/* Professor Routes */}
-            <Route path="professor/schedule" element={<ProfessorSchedule />} />
-            <Route path="professor/modules" element={<ProfessorModules />} />
-            <Route path="professor/students" element={<ProfessorStudents />} />
-            <Route path="professor/announcements" element={<ProfessorAnnouncements />} />
+            <Route element={<ProtectedRoute allowedRoles={['professor']} />}>
+              <Route path="professor/schedule" element={<ProfessorSchedule />} />
+              <Route path="professor/modules" element={<ProfessorModules />} />
+              <Route path="professor/students" element={<ProfessorStudents />} />
+              <Route path="professor/announcements" element={<ProfessorAnnouncements />} />
+            </Route>
 
              {/* School Admin Routes */}
-             <Route path="school-admin/schedules" element={<AdminSchedules />} />
-             <Route path="school-admin/exams" element={<AdminExams />} />
-             <Route path="school-admin/users" element={<AdminUsers />} />
-             <Route path="school-admin/events" element={<AdminEvents />} />
+             <Route element={<ProtectedRoute allowedRoles={['school_admin']} />}>
+               <Route path="school-admin/schedules" element={<AdminSchedules />} />
+               <Route path="school-admin/exams" element={<AdminExams />} />
+               <Route path="school-admin/users" element={<AdminUsers />} />
+               <Route path="school-admin/events" element={<AdminEvents />} />
+             </Route>
 
              {/* Sys Admin Routes */}
-             <Route path="sys-admin/dashboard" element={<SysAdminDashboard />} />
-             <Route path="sys-admin/feedback" element={<SysAdminFeedback />} />
-             <Route path="sys-admin/accounts" element={<SysAdminAccounts />} />
+             <Route element={<ProtectedRoute allowedRoles={['sys_admin']} />}>
+               <Route path="sys-admin/dashboard" element={<SysAdminDashboard />} />
+               <Route path="sys-admin/feedback" element={<SysAdminFeedback />} />
+               <Route path="sys-admin/accounts" element={<SysAdminAccounts />} />
+             </Route>
 
-             {/* Common */}
-             <Route path="profile" element={<Profile />} />
+             {/* Common Protected Route */}
+             <Route element={<ProtectedRoute allowedRoles={['student', 'professor', 'school_admin', 'sys_admin']} />}>
+                <Route path="profile" element={<Profile />} />
+             </Route>
 
              {/* 404 */}
             <Route path="*" element={<Navigate to="/" replace />} />

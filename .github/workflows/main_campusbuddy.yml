@@ -30,7 +30,7 @@ jobs:
         working-directory: campus-buddy-fe
         run: |
           npm install
-          npm run build
+          npm run build -- --base=/campus-buddy-fe/
 
       # 2. Build the Landing Page / Entry Point (intro-fe)
       - name: Build Intro Page
