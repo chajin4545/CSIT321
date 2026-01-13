@@ -21,3 +21,22 @@ npm install
 ```
 
 then, run command 'npm run dev' for all A, B and C
+
+
+For this project, please follow the workflow below:
+
+```git checkout main```
+```git pull origin main```
+
+For example, If you are working on login feature,
+```git checkout -b feature/login-button```
+
+after code change, commit and push the code. Then, request for pull request.
+After pull request successfull, swith back to main
+```git checkout main```
+```git pull origin main```
+
+Now you have main branch with your new code implemented.
+
+delete your old branch to keep branches clean.
+```git branch -d feature/login-button```
