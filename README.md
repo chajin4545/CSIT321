@@ -28,7 +28,7 @@ For this project, please follow the workflow below:
 ```git checkout main```
 ```git pull origin main```
 
-For example, If you are working on login feature,
+For example, If you are working on login feature, create a new branch and checkout to it
 ```git checkout -b feature/login-button```
 
 after code change, commit and push the code. Then, request for pull request.
