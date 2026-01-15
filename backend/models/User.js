@@ -6,7 +6,7 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-    }, // e.g. "9234567"
+    }, 
     full_name: {
       type: String,
       required: true,
@@ -19,7 +19,7 @@ const userSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
-    }, // Hashed
+    }, 
     role: {
       type: String,
       required: true,
@@ -51,12 +51,7 @@ const userSchema = mongoose.Schema(
   }
 );
 
-// Match user-entered password to hashed password in database
-// Note: In your seed file, passwords are plain text 'password123'. 
-// For this to work efficiently with the seed data for now, we will do a direct comparison.
-// IN PRODUCTION: You MUST use bcrypt to hash passwords.
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  // TODO: Replace with bcrypt.compare(enteredPassword, this.password) after migration
   return enteredPassword === this.password; 
 };
 

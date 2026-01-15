@@ -1,4 +1,4 @@
-import { StyleSheet, ScrollView, View, TouchableOpacity, Linking } from 'react-native';
+import { StyleSheet, ScrollView, View, TouchableOpacity, Linking, Platform } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
@@ -51,6 +51,16 @@ export default function HomeScreen() {
     }
   ];
 
+  const handleTryApp = () => {
+    if (Platform.OS === 'web' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      // Production (Azure): Go to the relative path hosted on the same server
+      Linking.openURL(window.location.origin + '/campus-buddy-fe/');
+    } else {
+      // Local Development: Go to the separate Vite dev server
+      Linking.openURL('http://localhost:5173/campus-buddy-fe/');
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <ThemedView style={styles.contentWrapper}>
@@ -65,7 +75,7 @@ export default function HomeScreen() {
           <View style={styles.heroButtons}>
             <TouchableOpacity 
               style={styles.primaryButton}
-              onPress={() => Linking.openURL('http://localhost:5173/campus-buddy-fe/')}
+              onPress={handleTryApp}
             >
               <ThemedText style={styles.primaryButtonText}>Try CampusBuddy</ThemedText>
             </TouchableOpacity>
