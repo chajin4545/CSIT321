@@ -1,102 +1,289 @@
-import React, { useState } from 'react';
+/**
+ * AdminChat.jsx
+ * 
+ * The main interface for the Student-side "Admin Assistant" chatbot.
+ * 
+ * Features:
+ * - Real-time-like messaging (sending to backend, awaiting response).
+ * - Chat History Sidebar (fetching, selecting, and creating new sessions).
+ * - Optimistic UI updates (showing user message immediately).
+ * - Auto-scrolling to the latest message.
+ * 
+ * State Management:
+ * - messages: Array of current conversation objects.
+ * - currentSessionId: Tracks which DB session is active (null for new chat).
+ * - history: Array of past sessions for the sidebar.
+ */
+
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Plus, MoreVertical, Star, Trash2, Bell, User, Send } from 'lucide-react';
+import { Plus, MoreVertical, Star, Trash2, Bell, User, Send, Loader, MessageSquare } from 'lucide-react';
 import Header from '../../components/common/Header';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminChat = () => {
   const navigate = useNavigate();
   const { setMobileMenuOpen } = useOutletContext();
+  const { user } = useAuth(); // Auth context provides the JWT token
+  
+  // UI Inputs
   const [inputText, setInputText] = useState('');
-  const [history, setHistory] = useState([
-    { id: 1, title: 'Fall 2024 Grades', date: 'Yesterday' },
-    { id: 2, title: 'Exam Schedule', date: '2 days ago' },
-    { id: 3, title: 'Tuition Fee Query', date: '1 week ago' },
-    { id: 4, title: 'Library Fine', date: '2 weeks ago' },
-    { id: 5, title: 'Transcript Request', date: 'Last month' },
-    { id: 6, title: 'Housing Application', date: 'Last month' },
-    { id: 7, title: 'Scholarship Info', date: '2 months ago' },
-    { id: 8, title: 'ID Card Replacement', date: '3 months ago' },
-  ]);
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef(null); // Reference for auto-scrolling
+  
+  // Data State
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [history, setHistory] = useState([]);
   const [activeMenu, setActiveMenu] = useState(null);
 
-  const mockHistory = [
-    { sender: 'bot', text: 'Hello Alex! I am your Admin Assistant. I can help with schedules, grades, and administrative queries.' },
-    { sender: 'user', text: 'When is my next exam?' },
-    { sender: 'bot', text: 'Your next exam is CS305: Algorithms on Dec 15th at 10:00 AM in Hall A.' },
-    { sender: 'user', text: 'Can I check my current GPA?' },
-    { sender: 'bot', text: 'Your current GPA for this semester is 3.8. You have an A in CS101 and B+ in MAT202.' },
-    { sender: 'user', text: 'What is the deadline for tuition payment?' },
-    { sender: 'bot', text: 'The deadline for Fall 2024 tuition payment is January 15th, 2025.' },
-    { sender: 'user', text: 'Can I pay in installments?' },
-    { sender: 'bot', text: 'Yes, you can set up a payment plan via the Bursar Office portal. Would you like the link?' },
-    { sender: 'user', text: 'Yes please.' },
-    { sender: 'bot', text: 'Here is the link: portal.uowmail.edu.au/payments' },
-    { sender: 'user', text: 'Thanks!' },
-    { sender: 'bot', text: 'Is there anything else I can help you with today?' },
-    { sender: 'user', text: 'How do I request an official transcript?' },
-    { sender: 'bot', text: 'You can request an official transcript through the Registrar page. It costs $5 per copy.' }
-  ];
-
-  const handleDelete = (id) => {
-    setHistory(history.filter(item => item.id !== id));
-    setActiveMenu(null);
+  /**
+   * Auto-scroll behavior
+   * Triggered whenever 'messages' array changes.
+   */
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleReview = (id) => {
-    navigate('/student/review');
-    setActiveMenu(null);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  /**
+   * Initial Data Fetch
+   * Loads chat history on mount.
+   */
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  /**
+   * fetchHistory
+   * Retrieves the list of past chat sessions for the sidebar.
+   * If history exists, it automatically loads the most recent session.
+   */
+  const fetchHistory = async () => {
+    try {
+      const response = await fetch('/api/chat/history', {
+        headers: { 'Authorization': `Bearer ${user?.token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(data);
+        
+        // UX Decision: Auto-load the latest chat if available, else show "New Chat" state
+        if (data.length > 0) {
+          loadSession(data[0].session_id);
+        } else {
+          resetToNewChat();
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+    }
+  };
+
+  /**
+   * loadSession
+   * Fetches full message history for a specific session ID.
+   */
+  const loadSession = async (sessionId) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/chat/session/${sessionId}`, {
+        headers: { 'Authorization': `Bearer ${user?.token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentSessionId(data.sessionId);
+        setMessages(data.messages);
+      }
+    } catch (error) {
+      console.error("Failed to load session:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * resetToNewChat
+   * Clears current session state to allow starting a fresh conversation.
+   */
+  const resetToNewChat = () => {
+    setCurrentSessionId(null);
+    setMessages([{ 
+      role: 'assistant', 
+      content: `Hello ${user?.name || 'Student'}! I am your AI Assistant. I can help with general queries. What can I do for you today?` 
+    }]);
+  };
+
+  /**
+   * handleSend
+   * Core logic for sending messages.
+   * 1. Optimistically updates UI with user message.
+   * 2. Sends payload to Backend API.
+   * 3. Appends Backend response to UI.
+   * 4. Updates Session ID if this was the first message in a new chat.
+   */
+  const handleSend = async () => {
+    if (!inputText.trim()) return;
+
+    // 1. Optimistic Update
+    const userMessage = { role: 'user', content: inputText };
+    const newMessages = [...messages, userMessage];
+    
+    setMessages(newMessages);
+    setInputText('');
+    setIsLoading(true);
+
+    try {
+      // 2. API Call
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify({ 
+          message: userMessage.content, 
+          sessionId: currentSessionId 
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to get response');
+
+      const data = await response.json();
+      
+      // 3. Handle New Session Creation
+      // If we started with null sessionId, the backend created one. We capture it here.
+      if (!currentSessionId && data.sessionId) {
+        setCurrentSessionId(data.sessionId);
+        fetchHistory(); // Refresh sidebar so the new chat appears in the list
+      }
+
+      // 4. Update UI with AI Response
+      setMessages(prev => [...prev, data.message]); 
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Sorry, I encountered an error connecting to the server. Please try again later.' 
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  // Helper: Relative date formatting (Today, Yesterday, etc.)
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    return date.toLocaleDateString();
+  };
+
+  // Helper: Format message content to handle Markdown links [Text](URL)
+  const formatMessage = (content) => {
+    if (!content) return null;
+    
+    // Regex to match [text](url)
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = linkRegex.exec(content)) !== null) {
+      // Push text before the link
+      if (match.index > lastIndex) {
+        parts.push(content.substring(lastIndex, match.index));
+      }
+      
+      // Push the link component
+      parts.push(
+        <a 
+          key={match.index} 
+          href={match[2]} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-600 underline font-medium"
+          onClick={(e) => e.stopPropagation()} 
+        >
+          {match[1]}
+        </a>
+      );
+      
+      lastIndex = linkRegex.lastIndex;
+    }
+
+    // Push remaining text
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : content;
   };
 
   return (
     <div className="flex flex-col h-full" onClick={() => setActiveMenu(null)}>
       <Header title="Admin Assistant" setMobileMenuOpen={setMobileMenuOpen} />
       <div className="flex flex-1 overflow-hidden bg-slate-50">
-        {/* History Sidebar */}
+        
+        {/* --- Sidebar (History) --- */}
         <div className="w-64 bg-white border-r border-slate-200 flex-shrink-0 hidden md:flex flex-col h-full">
             <div className="p-4 border-b border-slate-100 flex justify-between items-center flex-shrink-0">
-            <span className="font-bold text-slate-700 text-sm uppercase tracking-wide">History</span>
-            <button className="text-slate-400 hover:text-blue-600"><Plus size={18} /></button>
+              <span className="font-bold text-slate-700 text-sm uppercase tracking-wide">History</span>
+              <button 
+                onClick={resetToNewChat}
+                className="text-slate-400 hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-blue-50"
+                title="New Chat"
+              >
+                <Plus size={20} />
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto">
+            {history.length === 0 && (
+              <div className="p-4 text-center text-slate-400 text-sm italic">No history yet. Start a chat!</div>
+            )}
             {history.map(item => (
-                <div key={item.id} className="relative group border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                <button className="w-full text-left p-4 pr-10">
-                    <div className="text-sm font-medium text-slate-800 truncate">{item.title}</div>
-                    <div className="text-xs text-slate-400 mt-1">{item.date}</div>
-                </button>
+                <div 
+                  key={item._id || item.session_id} 
+                  className={`relative group border-b border-slate-50 transition-colors cursor-pointer ${currentSessionId === item.session_id ? 'bg-blue-50 border-blue-100' : 'hover:bg-slate-50'}`}
+                  onClick={() => loadSession(item.session_id)}
+                >
+                <div className="w-full text-left p-4 pr-10">
+                    <div className={`text-sm font-medium truncate ${currentSessionId === item.session_id ? 'text-blue-700' : 'text-slate-800'}`}>
+                      {item.title || 'New Chat'}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-1">{formatDate(item.last_active)}</div>
+                </div>
+                {/* Menu Placeholder */}
                 <button 
                     onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveMenu(activeMenu === item.id ? null : item.id);
+                      e.stopPropagation();
+                      setActiveMenu(activeMenu === item.session_id ? null : item.session_id);
                     }}
-                    className={`absolute right-2 top-3 p-1 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all ${activeMenu === item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                    className={`absolute right-2 top-3 p-1 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all ${activeMenu === item.session_id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                 >
                     <MoreVertical size={16} />
                 </button>
-                {activeMenu === item.id && (
-                    <div className="absolute right-2 top-10 w-32 bg-white rounded-lg shadow-xl border border-slate-200 z-50 overflow-hidden">
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); handleReview(item.id); }}
-                        className="w-full text-left px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-2"
-                    >
-                        <Star size={12} /> Leave Review
-                    </button>
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                        className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
-                    >
-                        <Trash2 size={12} /> Delete
-                    </button>
-                    </div>
-                )}
                 </div>
             ))}
             </div>
         </div>
 
-        {/* Main Chat */}
+        {/* --- Main Chat Area --- */}
         <div className="flex-1 flex flex-col relative min-w-0 h-full">
-            {/* Announcement Banner */}
+            {/* Announcement Banner (Static Mockup for Context) */}
             <div className="bg-blue-50 border-b border-blue-100 p-3 px-6 flex justify-between items-center shadow-sm z-10 flex-shrink-0">
             <div className="flex items-center gap-2 text-sm text-blue-900 overflow-hidden whitespace-nowrap">
                 <Bell size={16} className="text-blue-600 flex-shrink-0" />
@@ -111,37 +298,66 @@ const AdminChat = () => {
             </button>
             </div>
 
-            {/* Messages */}
+            {/* Messages List */}
             <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
-            {mockHistory.map((msg, idx) => (
-                <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex max-w-2xl gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.sender === 'user' ? 'bg-blue-600' : 'bg-indigo-600'}`}>
+            {messages.length === 0 && !isLoading && (
+               <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
+                  <MessageSquare size={64} className="mb-4" />
+                  <p>Start a new conversation</p>
+               </div>
+            )}
+            {messages.map((msg, idx) => (
+                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`flex max-w-2xl gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {/* Avatar */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-blue-600' : 'bg-indigo-600'}`}>
                     <User size={16} className="text-white"/>
                     </div>
+                    {/* Message Bubble */}
                     <div className={`p-4 rounded-2xl shadow-sm text-sm md:text-base whitespace-pre-wrap ${
-                    msg.sender === 'user' 
+                    msg.role === 'user' 
                         ? 'bg-blue-600 text-white rounded-tr-none' 
                         : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
                     }`}>
-                    {msg.text}
+                    {msg.role === 'user' ? msg.content : formatMessage(msg.content)}
                     </div>
                 </div>
                 </div>
             ))}
+            
+            {/* Loading Indicator */}
+            {isLoading && (
+              <div className="flex justify-start">
+                 <div className="flex max-w-2xl gap-3 flex-row">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-600">
+                      <User size={16} className="text-white"/>
+                    </div>
+                    <div className="p-4 rounded-2xl shadow-sm bg-white border border-slate-200 text-slate-500 rounded-tl-none flex items-center gap-2">
+                      <Loader size={16} className="animate-spin" /> Thinking...
+                    </div>
+                 </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
+            {/* Input Area */}
             <div className="bg-white border-t border-slate-200 p-4 md:p-6 flex-shrink-0">
             <div className="max-w-4xl mx-auto flex gap-4">
                 <input 
                 type="text" 
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Ask about grades, schedules..." 
                 className="flex-1 px-4 py-3 bg-slate-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                disabled={isLoading}
                 />
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-xl flex items-center gap-2 font-medium transition-colors">
+                <button 
+                  onClick={handleSend}
+                  disabled={isLoading || !inputText.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-6 rounded-xl flex items-center gap-2 font-medium transition-colors"
+                >
                 <Send size={18} />
                 </button>
             </div>

@@ -4,3 +4,8 @@ mongo_schema_design.txt
 DBexecutionHistories.txt
 db_migration_instructions.txt
 azureLog.txt
+.vscode/tasks.json
+dbconnection.txt
+example_modules_results.txt
+uow_grade_description.txt
+backend/seed_full_data.js
