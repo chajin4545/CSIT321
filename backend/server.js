@@ -1,11 +1,12 @@
 // Entry point for the backend server
 const express = require('express');
 const dotenv = require('dotenv');
+dotenv.config(); // Load env vars immediately
+
 const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
-
-dotenv.config();
+const chatRoutes = require('./routes/chatRoutes');
 
 connectDB();
 
@@ -16,6 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/', (req, res) => {
   res.send('Campus Buddy API is running...');

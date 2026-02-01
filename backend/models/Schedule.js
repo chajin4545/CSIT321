@@ -16,12 +16,12 @@ const scheduleSchema = mongoose.Schema(
     venue: { type: String }, // e.g., "LT1.1" or "Exam Hall A"
     
     // Time details
-    day_of_week: { type: String }, // e.g., "Monday" (Relevant for recurring classes)
-    start_time: { type: String }, // "14:00"
-    end_time: { type: String }, // "16:00"
+    day_of_week: { type: String }, // e.g., "Monday" (Helper/derived field)
+    start_time: { type: String, required: true }, // "14:00"
+    end_time: { type: String, required: true }, // "16:00"
     
-    // For one-off events like Exams
-    specific_date: { type: Date }, 
+    // Calendar-based Date (Required for ALL events in irregular scheduling)
+    specific_date: { type: Date, required: true }, 
     
     group_id: { type: String }, // e.g., "Tutorial Group A" (Optional)
   },

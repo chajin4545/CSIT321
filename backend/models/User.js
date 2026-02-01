@@ -40,7 +40,7 @@ const userSchema = mongoose.Schema(
     // Student Specific
     // NOTE: Detailed enrollment data (grades) moved to 'Enrollment' collection.
     // We keep a lightweight array here for quick access if needed, or rely on queries.
-    current_gpa: { type: Number },
+    wam: { type: Number },
 
     // Professor Specific
     teaching_modules: [{ type: String, ref: 'Module' }], // Array of Module Codes
