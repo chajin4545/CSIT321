@@ -33,6 +33,8 @@ const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen }) => {
         return [
           { path: '/school-admin/schedules', label: 'Teaching Schedules', icon: Calendar },
           { path: '/school-admin/exams', label: 'Exam Schedules', icon: Clock },
+          { path: '/school-admin/modules', label: 'Modules', icon: BookOpen },
+          { path: '/school-admin/classes', label: 'Classes', icon: Users },
           { path: '/school-admin/events', label: 'Event Management', icon: Star },
           { path: '/school-admin/users', label: 'User Management', icon: Users },
           { path: '/profile', label: 'My Profile', icon: User },

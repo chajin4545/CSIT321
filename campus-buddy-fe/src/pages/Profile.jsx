@@ -37,7 +37,7 @@ const Profile = () => {
 
   const canEditName = isAdmin;
   const canEditEmail = isAdmin;
-  const canEditPhone = true; 
+  const canEditPhone = isAdmin || isStudentOrProf; 
   const canEditAddress = isStudentOrProf;
 
   return (

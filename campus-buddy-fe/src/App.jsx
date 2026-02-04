@@ -28,6 +28,8 @@ import AdminSchedules from './pages/school-admin/Schedules';
 import AdminExams from './pages/school-admin/Exams';
 import AdminUsers from './pages/school-admin/Users';
 import AdminEvents from './pages/school-admin/Events';
+import AdminModules from './pages/school-admin/Modules';
+import AdminClasses from './pages/school-admin/Classes';
 
 // Sys Admin Pages
 import SysAdminDashboard from './pages/sys-admin/Dashboard';
@@ -71,6 +73,8 @@ const App = () => {
                <Route path="school-admin/exams" element={<AdminExams />} />
                <Route path="school-admin/users" element={<AdminUsers />} />
                <Route path="school-admin/events" element={<AdminEvents />} />
+               <Route path="school-admin/modules" element={<AdminModules />} />
+               <Route path="school-admin/classes" element={<AdminClasses />} />
              </Route>
 
              {/* Sys Admin Routes */}
