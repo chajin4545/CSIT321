@@ -7,6 +7,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const schoolAdminRoutes = require('./routes/schoolAdminRoutes');
 
 connectDB();
 
@@ -18,6 +19,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/school-admin', schoolAdminRoutes);
 
 app.get('/', (req, res) => {
   res.send('Campus Buddy API is running...');
