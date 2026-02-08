@@ -21,16 +21,12 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    if (user?.role === 'professor') {
-      fetchProfile();
-    } else {
-      setLoading(false);
-    }
+    fetchProfile();
   }, []);
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/professor/profile', {
+      const response = await fetch('/api/auth/profile', {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
       if (response.ok) {
@@ -45,6 +41,7 @@ const Profile = () => {
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
+      setError('Failed to load profile data.');
     } finally {
       setLoading(false);
     }
@@ -59,40 +56,36 @@ const Profile = () => {
     setError('');
     setSuccess('');
 
-    if (user?.role === 'professor') {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/professor/profile', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${user?.token}`,
-          },
-          body: JSON.stringify({
-            full_name: profileData.name,
-            phone: profileData.phone,
-            address: profileData.address,
-            office_hours: profileData.office_hours,
-          }),
-        });
+    try {
+      setLoading(true);
+      const response = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.token}`,
+        },
+        body: JSON.stringify({
+          full_name: profileData.name,
+          phone: profileData.phone,
+          address: profileData.address,
+          office_hours: profileData.office_hours,
+        }),
+      });
 
-        if (response.ok) {
-          setSuccess('Profile Updated Successfully!');
-          setIsEditing(false);
-          setTimeout(() => setSuccess(''), 3000);
-        } else {
-          const data = await response.json();
-          setError(data.message || 'Failed to update profile');
-        }
-      } catch (err) {
-        setError('Network error. Please try again.');
-      } finally {
-        setLoading(false);
+      if (response.ok) {
+        setSuccess('Profile Updated Successfully!');
+        setIsEditing(false);
+        // Refresh local data
+        fetchProfile();
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        const data = await response.json();
+        setError(data.message || 'Failed to update profile');
       }
-    } else {
-      setIsEditing(false);
-      setSuccess('Profile Updated Successfully!');
-      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 

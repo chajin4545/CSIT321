@@ -38,10 +38,10 @@ const sendMessage = async (req, res) => {
 [ChatController] [${requestId}] --- New Chat Request ---`);
   
   try {
-    const { message, sessionId } = req.body;
+    const { message, sessionId, type, relatedModuleCode } = req.body;
     const userId = req.user ? req.user.user_id : null;
     
-    console.log(`[ChatController] [${requestId}] User: ${userId}, Session: ${sessionId || 'New'}`);
+    console.log(`[ChatController] [${requestId}] User: ${userId}, Session: ${sessionId || 'New'}, Type: ${type || 'Default'}`);
     console.log(`[ChatController] [${requestId}] User Message: "${message}"`);
 
     // Validation
@@ -61,21 +61,22 @@ const sendMessage = async (req, res) => {
     // This allows continuing a specific conversation context
     if (sessionId) {
       session = await ChatSession.findOne({ session_id: sessionId, user_id: userId });
-      if (session) console.log(`[ChatController] [${requestId}] Found existing session: ${session.session_id}`);
+      if (session) console.log(`[ChatController] [${requestId}] Found existing session: ${session.session_id} (${session.type})`);
       else console.log(`[ChatController] [${requestId}] Session ${sessionId} not found, creating new.`);
     }
 
     // 2. If no session found (or no ID provided), create new one
-    // New sessions default to 'admin_support' type (can be expanded later)
+    // New sessions default to 'admin_support' type unless specified
     if (!session) {
       session = new ChatSession({
         session_id: sessionId || randomUUID(),
         user_id: userId,
-        type: 'admin_support',
+        type: type || 'admin_support',
+        related_module_code: relatedModuleCode || null,
         title: message.substring(0, 50) || 'New Chat', // First message becomes title
         messages: []
       });
-      console.log(`[ChatController] [${requestId}] Created new session: ${session.session_id}`);
+      console.log(`[ChatController] [${requestId}] Created new session: ${session.session_id} (${session.type})`);
     }
 
     // 3. Add User Message to DB (Persistence)
@@ -92,10 +93,25 @@ const sendMessage = async (req, res) => {
     // Dynamic Date for Production
     const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    const openAIMessages = [
-      {
-        role: "system",
-        content: `You are an intelligent assistant for CampusBuddy, helping students of SIM UOW (University of Wollongong).
+    let systemPromptContent = "";
+
+    if (session.type === 'course_tutor') {
+      systemPromptContent = `You are a specialized Course Tutor for the module ${session.related_module_code || 'Unknown'}.
+      
+CURRENT DATE: ${currentDate}
+
+STRICT INSTRUCTIONS:
+1. Your goal is to answer student questions based ONLY on the provided course materials (Lecture notes, labs, assignments).
+2. You MUST use the 'search_course_materials' tool to find answers. 
+   - Call this tool with the module_code '${session.related_module_code}' and the user's query keywords.
+3. If the tool returns relevant text snippets, answer the question using that information.
+4. If the tool returns NO matches or the matches are irrelevant, you MUST reply:
+   "I'm sorry, I couldn't find the answer to that in the provided course materials for ${session.related_module_code}."
+5. DO NOT hallucinate or use outside knowledge to answer specific curriculum questions.
+6. Be helpful, encouraging, and academic in tone.`;
+    } else {
+      // Default: Admin Support
+      systemPromptContent = `You are an intelligent assistant for CampusBuddy, helping students of SIM UOW (University of Wollongong).
         
 CURRENT DATE: ${currentDate}
 
@@ -115,7 +131,13 @@ IMPORTANT DOMAIN RULES:
 7. **LINKS & FORMATTING**:
    - ALWAYS provide links in Markdown format: [Link Text](URL).
    - When providing the payment guide, ensure [SIMConnect](https://simconnect.simge.edu.sg/) is a clickable link.
-   - Use bold text for amounts and due dates to make them stand out.`
+   - Use bold text for amounts and due dates to make them stand out.`;
+    }
+
+    const openAIMessages = [
+      {
+        role: "system",
+        content: systemPromptContent
       },
       ...session.messages.map(m => ({
         role: m.sender === 'user' ? 'user' : 'assistant',
@@ -125,8 +147,9 @@ IMPORTANT DOMAIN RULES:
 
     // 5. Generate Response
     // We pass userId so the service can fetch user-specific data (RAG)
-    console.log(`[ChatController] [${requestId}] Delegating to ChatService...`);
-    const aiResponse = await chatService.generateResponse(openAIMessages, userId, requestId, false);
+    console.log(`[ChatController] [${requestId}] Delegating to ChatService (${session.type})...`);
+    // Pass session.type so ChatService knows which tools to allow
+    const aiResponse = await chatService.generateResponse(openAIMessages, userId, requestId, false, session.type);
     
     // 6. Add Bot Message to DB
     session.messages.push({

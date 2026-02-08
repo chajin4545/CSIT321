@@ -52,6 +52,9 @@ const moduleSchema = mongoose.Schema(
         category: { type: String }, // "Lecture Notes", "Labs"
         title: { type: String },
         file_url: { type: String },
+        original_name: { type: String },
+        mime_type: { type: String },
+        text_content: { type: String }, // Extracted text for RAG/Search
         uploaded_at: { type: Date },
       },
     ],
