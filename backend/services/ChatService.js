@@ -103,6 +103,27 @@ const TOOLS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "search_course_materials",
+      description: "Search within the uploaded course materials (PDFs, docs) for answers. Use this when the user asks a question about the course content.",
+      parameters: {
+        type: "object",
+        properties: {
+          module_code: {
+            type: "string",
+            description: "The module code to search in (e.g., CSIT321).",
+          },
+          query: {
+            type: "string",
+            description: "The search keywords or phrase.",
+          },
+        },
+        required: ["module_code", "query"],
+      },
+    },
+  },
 ];
 
 /**
@@ -115,18 +136,25 @@ const TOOLS = [
  * @param {string} userId - Context for tool execution (whose data to fetch).
  * @param {string} requestId - For tracing logs.
  * @param {boolean} isGuest - Whether the user is a guest (restricts tool access).
+ * @param {string} chatType - 'admin_support' or 'course_tutor'.
  * @returns {Object} The final message object from OpenAI.
  */
-const generateResponse = async (messages, userId, requestId = 'UNKNOWN', isGuest = false) => {
+const generateResponse = async (messages, userId, requestId = 'UNKNOWN', isGuest = false, chatType = 'admin_support') => {
   try {
-    console.log(`[ChatService] [${requestId}] Starting generation with ${messages.length} messages context. Guest: ${isGuest}`);
+    console.log(`[ChatService] [${requestId}] Starting generation. Guest: ${isGuest}, Type: ${chatType}`);
     
-    // Filter tools based on role
-    // Guests only get public event info. Students get everything EXCEPT public events (unless we want them to have it too? Let's give students everything).
-    // Actually, students might want to know about events too. So let's include it for everyone, but restrict personal tools for guests.
-    let availableTools = TOOLS;
+    // Filter tools based on role and chat type
+    let availableTools = [];
+
     if (isGuest) {
+      // Guests only get public events
       availableTools = TOOLS.filter(t => t.function.name === 'get_public_events');
+    } else if (chatType === 'course_tutor') {
+      // Course Tutor only searches materials
+      availableTools = TOOLS.filter(t => t.function.name === 'search_course_materials');
+    } else {
+      // Admin Support (Default) - Everything except specialized course search and guest events
+      availableTools = TOOLS.filter(t => t.function.name !== 'search_course_materials' && t.function.name !== 'get_public_events');
     }
 
     // Create a mutable copy of messages to append tool inputs/outputs during the loop
@@ -192,6 +220,12 @@ const generateResponse = async (messages, userId, requestId = 'UNKNOWN', isGuest
             toolResult = await chatTools.get_my_payments({ user_id: userId, requestId });
           } else if (functionName === 'get_public_events') {
             toolResult = await chatTools.get_public_events({ requestId });
+          } else if (functionName === 'search_course_materials') {
+            toolResult = await chatTools.search_course_materials({ 
+              module_code: functionArgs.module_code, 
+              query: functionArgs.query, 
+              requestId 
+            });
           } else {
             console.warn(`[ChatService] [${requestId}] Unknown tool requested: ${functionName}`);
             toolResult = { error: "Unknown tool" };

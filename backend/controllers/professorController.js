@@ -2,6 +2,20 @@ const User = require('../models/User');
 const Module = require('../models/Module');
 const Schedule = require('../models/Schedule');
 const Enrollment = require('../models/Enrollment');
+const fs = require('fs');
+const path = require('path');
+const pdf = require('pdf-parse');
+const { BlobServiceClient } = require('@azure/storage-blob');
+
+// Azure Storage Configuration
+const AZURE_CONNECTION_STRING = process.env.AZURE_STORAGE_CONNECTION_STRING;
+const AZURE_CONTAINER_NAME = process.env.AZURE_STORAGE_CONTAINER_NAME || 'uploads';
+
+let containerClient = null;
+if (AZURE_CONNECTION_STRING) {
+  const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_CONNECTION_STRING);
+  containerClient = blobServiceClient.getContainerClient(AZURE_CONTAINER_NAME);
+}
 
 // @desc    Post announcement in a module
 // @route   POST /api/professor/announcements
@@ -56,28 +70,62 @@ const getAnnouncements = async (req, res) => {
 // @access  Private (Professor only)
 const uploadMaterial = async (req, res) => {
   try {
-    // Handle both JSON and FormData requests
     let { moduleCode, category, title } = req.body;
 
     if (!moduleCode || !category || !title) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: moduleCode, category, title',
-        received: { moduleCode, category, title, hasFile: !!req.file }
-      });
+      if (req.file) fs.unlinkSync(req.file.path); // Clean up if validation fails
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
     const module = await Module.findOne({ module_code: moduleCode });
     if (!module) {
+      if (req.file) fs.unlinkSync(req.file.path);
       return res.status(404).json({ message: 'Module not found' });
     }
 
-    // Create file URL (in production, upload to cloud storage and get URL)
     let fileUrl = '';
+    let extractedText = '';
+
     if (req.file) {
-      // Build absolute URL to uploaded file so frontend can open it directly
-      const host = req.get('host');
-      const protocol = req.protocol;
-      fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+      // 1. Extract text locally if PDF
+      if (req.file.mimetype === 'application/pdf') {
+        try {
+          const dataBuffer = fs.readFileSync(req.file.path);
+          const data = await pdf(dataBuffer);
+          extractedText = data.text;
+        } catch (parseError) {
+          console.error('Error parsing PDF:', parseError);
+        }
+      }
+
+      // 2. Upload to Azure if configured
+      if (containerClient) {
+        try {
+          const blobName = `${moduleCode}_${Date.now()}_${req.file.originalname}`;
+          const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+          
+          await blockBlobClient.uploadFile(req.file.path, {
+            blobHTTPHeaders: { blobContentType: req.file.mimetype }
+          });
+          
+          fileUrl = blockBlobClient.url;
+          console.log(`Uploaded to Azure: ${fileUrl}`);
+          
+          // Delete local file after cloud upload
+          fs.unlinkSync(req.file.path);
+        } catch (uploadError) {
+          console.error('Azure Upload Error:', uploadError);
+          // Fallback to local URL if Azure fails but file exists
+          const host = req.get('host');
+          const protocol = req.protocol;
+          fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+        }
+      } else {
+        // No Azure config, stay local
+        const host = req.get('host');
+        const protocol = req.protocol;
+        fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+      }
     } else if (req.body.fileUrl) {
       fileUrl = req.body.fileUrl;
     } else {
@@ -88,15 +136,17 @@ const uploadMaterial = async (req, res) => {
       category,
       title,
       file_url: fileUrl,
-      original_name: req.file?.originalname || null,
-      mime_type: req.file?.mimetype || null,
+      original_name: req.file?.originalname || 'external_link',
+      mime_type: req.file?.mimetype || 'text/html',
       file_size: req.file?.size || null,
+      text_content: extractedText,
       uploaded_at: new Date(),
     });
 
     await module.save();
     res.json({ message: 'Material uploaded successfully', module });
   } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     res.status(500).json({ message: error.message });
   }
 };
@@ -111,6 +161,19 @@ const removeMaterial = async (req, res) => {
     const module = await Module.findOne({ module_code: moduleCode });
     if (!module) {
       return res.status(404).json({ message: 'Module not found' });
+    }
+
+    const material = module.materials.id(materialId);
+    if (material && material.file_url.includes('blob.core.windows.net') && containerClient) {
+      try {
+        // Extract blob name from URL
+        const blobName = material.file_url.split('/').pop();
+        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        await blockBlobClient.deleteIfExists();
+        console.log(`Deleted blob from Azure: ${blobName}`);
+      } catch (deleteError) {
+        console.error('Error deleting blob from Azure:', deleteError);
+      }
     }
 
     module.materials = module.materials.filter(

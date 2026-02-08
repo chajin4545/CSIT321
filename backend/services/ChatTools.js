@@ -291,11 +291,73 @@ const get_my_payments = async ({ user_id, requestId = 'tool' }) => {
   }
 };
 
+/**
+ * Tool: search_course_materials
+ * -----------------------------
+ * Searches the extracted text content of uploaded course materials.
+ * Used for Course Tutor queries like "What does the lecture say about recursion?".
+ * 
+ * @param {Object} params
+ * @param {string} params.module_code - The module to search in.
+ * @param {string} params.query - The search keyword/phrase.
+ * @param {string} [params.requestId]
+ * @returns {Array<Object>} List of matching text snippets from materials.
+ */
+const search_course_materials = async ({ module_code, query, requestId = 'tool' }) => {
+  try {
+    console.log(`[ChatTools] [${requestId}] search_course_materials: Searching '${query}' in ${module_code}`);
+    
+    if (!module_code || !query) {
+      return { error: "Missing module_code or query." };
+    }
+
+    const module = await Module.findOne({ module_code });
+    if (!module) {
+      return { error: `Module ${module_code} not found.` };
+    }
+
+    const results = [];
+    const searchRegex = new RegExp(query, 'i'); // Case-insensitive
+
+    for (const material of module.materials) {
+      if (material.text_content && searchRegex.test(material.text_content)) {
+        // Find the index of the match
+        const matchIndex = material.text_content.search(searchRegex);
+        
+        // Extract a snippet (e.g., 200 chars before and after)
+        const start = Math.max(0, matchIndex - 200);
+        const end = Math.min(material.text_content.length, matchIndex + 200 + query.length);
+        const snippet = material.text_content.substring(start, end).replace(/\s+/g, ' ').trim(); // Clean whitespace
+
+        results.push({
+          source_title: material.title,
+          category: material.category,
+          snippet: `...${snippet}...`
+        });
+      }
+    }
+
+    if (results.length === 0) {
+      console.log(`[ChatTools] [${requestId}] search_course_materials: No matches found.`);
+      return { message: "No relevant information found in the course materials for this query." };
+    }
+
+    console.log(`[ChatTools] [${requestId}] search_course_materials: Found ${results.length} matches.`);
+    // Limit to top 3 results to save context
+    return results.slice(0, 3);
+
+  } catch (error) {
+    console.error(`[ChatTools] [${requestId}] search_course_materials Error: ${error.message}`);
+    return { error: error.message };
+  }
+};
+
 module.exports = {
   get_student_profile,
   get_enrolled_modules,
   get_my_schedule,
   get_module_info,
   get_my_payments,
-  get_public_events
+  get_public_events,
+  search_course_materials
 };
