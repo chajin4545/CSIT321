@@ -8,6 +8,7 @@
  * - Chat History Sidebar (fetching, selecting, and creating new sessions).
  * - Optimistic UI updates (showing user message immediately).
  * - Auto-scrolling to the latest message.
+ * - Review/Feedback system for chat sessions.
  * 
  * State Management:
  * - messages: Array of current conversation objects.
@@ -17,7 +18,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Plus, MoreVertical, Star, Trash2, Bell, User, Send, Loader, MessageSquare } from 'lucide-react';
+import { Plus, MoreVertical, Star, Trash2, Bell, User, Send, Loader, MessageSquare, MessageSquarePlus, X } from 'lucide-react';
 import Header from '../../components/common/Header';
 import { useAuth } from '../../context/AuthContext';
 
@@ -36,6 +37,13 @@ const AdminChat = () => {
   const [messages, setMessages] = useState([]);
   const [history, setHistory] = useState([]);
   const [activeMenu, setActiveMenu] = useState(null);
+
+  // Review Modal State
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewSessionId, setReviewSessionId] = useState(null);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   /**
    * Auto-scroll behavior
@@ -69,12 +77,13 @@ const AdminChat = () => {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log("Fetched history:", data); // Debug log
         setHistory(data);
         
         // UX Decision: Auto-load the latest chat if available, else show "New Chat" state
-        if (data.length > 0) {
+        if (data.length > 0 && !currentSessionId) {
           loadSession(data[0].session_id);
-        } else {
+        } else if (data.length === 0) {
           resetToNewChat();
         }
       }
@@ -233,10 +242,60 @@ const AdminChat = () => {
     return parts.length > 0 ? parts : content;
   };
 
+  // --- Review Modal Logic ---
+
+  const openReviewModal = (sessionId) => {
+    setReviewSessionId(sessionId);
+    setRating(0);
+    setComment('');
+    setIsReviewModalOpen(true);
+    setActiveMenu(null); // Close the menu
+  };
+
+  const closeReviewModal = () => {
+    setIsReviewModalOpen(false);
+    setReviewSessionId(null);
+  };
+
+  const submitReview = async () => {
+    if (rating === 0) {
+      alert("Please select a star rating.");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      const response = await fetch('/api/chat/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify({
+          sessionId: reviewSessionId,
+          rating,
+          comment
+        })
+      });
+
+      if (response.ok) {
+        closeReviewModal();
+        alert("Review submitted successfully!");
+      } else {
+        throw new Error('Failed to submit review');
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("Failed to submit review. Please try again.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full" onClick={() => setActiveMenu(null)}>
       <Header title="Admin Assistant" setMobileMenuOpen={setMobileMenuOpen} />
-      <div className="flex flex-1 overflow-hidden bg-slate-50">
+      <div className="flex flex-1 overflow-hidden bg-slate-50 relative">
         
         {/* --- Sidebar (History) --- */}
         <div className="w-64 bg-white border-r border-slate-200 flex-shrink-0 hidden md:flex flex-col h-full">
@@ -266,16 +325,40 @@ const AdminChat = () => {
                     </div>
                     <div className="text-xs text-slate-400 mt-1">{formatDate(item.last_active)}</div>
                 </div>
-                {/* Menu Placeholder */}
+                
+                {/* 3-Dot Menu Button */}
                 <button 
                     onClick={(e) => {
                       e.stopPropagation();
+                      console.log(`Toggling menu for session: ${item.session_id}`);
                       setActiveMenu(activeMenu === item.session_id ? null : item.session_id);
                     }}
                     className={`absolute right-2 top-3 p-1 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all ${activeMenu === item.session_id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                 >
                     <MoreVertical size={16} />
                 </button>
+
+                {/* Dropdown Menu */}
+                {activeMenu === item.session_id && (
+                  <div className="absolute right-2 top-8 z-50 w-36 bg-white rounded-lg shadow-lg border border-slate-100 py-1">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("Clicked Make a Review");
+                        openReviewModal(item.session_id);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <MessageSquarePlus size={14} className="text-blue-500" />
+                      Make a Review
+                    </button>
+                    {/* Placeholder for future delete functionality */}
+                    {/* <button className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                      <Trash2 size={14} />
+                      Delete Chat
+                    </button> */}
+                  </div>
+                )}
                 </div>
             ))}
             </div>
@@ -364,6 +447,66 @@ const AdminChat = () => {
             </div>
         </div>
       </div>
+
+      {/* --- Review Modal Overlay --- */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold text-slate-800">Rate this Chat</h3>
+                <button onClick={closeReviewModal} className="text-slate-400 hover:text-slate-600">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="mb-6 flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button 
+                    key={star}
+                    onClick={() => setRating(star)}
+                    className="transition-transform hover:scale-110 focus:outline-none"
+                  >
+                    <Star 
+                      size={32} 
+                      className={`${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`} 
+                    />
+                  </button>
+                ))}
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Comments (Optional)
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="How was the response quality?"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none h-32"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={closeReviewModal}
+                  className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={submitReview}
+                  disabled={isSubmittingReview || rating === 0}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium disabled:bg-blue-300 flex justify-center items-center gap-2"
+                >
+                  {isSubmittingReview ? <Loader size={18} className="animate-spin" /> : 'Save Review'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -10,11 +10,14 @@ const chatSessionSchema = mongoose.Schema(
     user_id: {
       type: String,
       ref: 'User',
-      required: true,
-    }, // The student asking
+    }, // The student asking (optional for guests)
+    is_guest: {
+      type: Boolean,
+      default: false,
+    },
     type: {
       type: String,
-      enum: ['admin_support', 'course_tutor'],
+      enum: ['admin_support', 'course_tutor', 'guest_support'],
       required: true,
     },
     

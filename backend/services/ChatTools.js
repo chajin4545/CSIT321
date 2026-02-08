@@ -17,6 +17,45 @@ const Module = require('../models/Module');
 const Enrollment = require('../models/Enrollment');
 const Schedule = require('../models/Schedule');
 const Payment = require('../models/Payment');
+const Event = require('../models/Event');
+
+/**
+ * Tool: get_public_events
+ * -----------------------
+ * Fetches upcoming public events for guests.
+ * Used when guests ask "What's happening on campus?", "Any events next week?".
+ * 
+ * @param {Object} params
+ * @param {string} [params.requestId]
+ * @returns {Array<Object>} List of upcoming events.
+ */
+const get_public_events = async ({ requestId = 'tool' }) => {
+  try {
+    console.log(`[ChatTools] [${requestId}] get_public_events: Querying upcoming events`);
+    const today = new Date();
+    // Fetch events starting today or in the future
+    const events = await Event.find({ start_date: { $gte: today } })
+      .sort({ start_date: 1 })
+      .limit(5); // Limit to 5 to save context
+      
+    if (!events || events.length === 0) {
+      console.log(`[ChatTools] [${requestId}] get_public_events: No upcoming events`);
+      return { message: "No upcoming public events found." };
+    }
+    
+    return events.map(e => ({
+      title: e.title,
+      description: e.description,
+      venue: e.venue,
+      date: e.start_date.toISOString().split('T')[0],
+      time: e.start_date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      category: e.category
+    }));
+  } catch (error) {
+    console.error(`[ChatTools] [${requestId}] get_public_events Error: ${error.message}`);
+    return { error: error.message };
+  }
+};
 
 /**
  * Tool: get_student_profile
@@ -257,5 +296,6 @@ module.exports = {
   get_enrolled_modules,
   get_my_schedule,
   get_module_info,
-  get_my_payments
+  get_my_payments,
+  get_public_events
 };

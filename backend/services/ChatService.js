@@ -91,6 +91,18 @@ const TOOLS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "get_public_events",
+      description: "Get a list of upcoming public campus events. Use this for guest queries about what is happening on campus.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+      },
+    },
+  },
 ];
 
 /**
@@ -102,12 +114,21 @@ const TOOLS = [
  * @param {Array} messages - The conversation history (including system, user, and assistant messages).
  * @param {string} userId - Context for tool execution (whose data to fetch).
  * @param {string} requestId - For tracing logs.
+ * @param {boolean} isGuest - Whether the user is a guest (restricts tool access).
  * @returns {Object} The final message object from OpenAI.
  */
-const generateResponse = async (messages, userId, requestId = 'UNKNOWN') => {
+const generateResponse = async (messages, userId, requestId = 'UNKNOWN', isGuest = false) => {
   try {
-    console.log(`[ChatService] [${requestId}] Starting generation with ${messages.length} messages context`);
+    console.log(`[ChatService] [${requestId}] Starting generation with ${messages.length} messages context. Guest: ${isGuest}`);
     
+    // Filter tools based on role
+    // Guests only get public event info. Students get everything EXCEPT public events (unless we want them to have it too? Let's give students everything).
+    // Actually, students might want to know about events too. So let's include it for everyone, but restrict personal tools for guests.
+    let availableTools = TOOLS;
+    if (isGuest) {
+      availableTools = TOOLS.filter(t => t.function.name === 'get_public_events');
+    }
+
     // Create a mutable copy of messages to append tool inputs/outputs during the loop
     let currentMessages = [...messages];
     
@@ -123,8 +144,8 @@ const generateResponse = async (messages, userId, requestId = 'UNKNOWN') => {
       const completion = await openai.chat.completions.create({
         model: "gpt-4.1-mini", // Specific model version as requested
         messages: currentMessages,
-        tools: TOOLS,
-        tool_choice: "auto", // Let the model decide whether to use a tool or just reply
+        tools: availableTools.length > 0 ? availableTools : undefined,
+        tool_choice: availableTools.length > 0 ? "auto" : undefined, // Let the model decide whether to use a tool or just reply
       });
 
       const message = completion.choices[0].message;
@@ -169,6 +190,8 @@ const generateResponse = async (messages, userId, requestId = 'UNKNOWN') => {
             toolResult = await chatTools.get_module_info({ module_code: functionArgs.module_code, requestId });
           } else if (functionName === 'get_my_payments') {
             toolResult = await chatTools.get_my_payments({ user_id: userId, requestId });
+          } else if (functionName === 'get_public_events') {
+            toolResult = await chatTools.get_public_events({ requestId });
           } else {
             console.warn(`[ChatService] [${requestId}] Unknown tool requested: ${functionName}`);
             toolResult = { error: "Unknown tool" };

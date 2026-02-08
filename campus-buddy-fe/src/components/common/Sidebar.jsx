@@ -51,7 +51,6 @@ const Sidebar = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           { path: '/', label: 'Home', icon: Home },
           { path: '/guest/chat', label: 'Chat Assistant', icon: MessageCircle },
           { path: '/guest/events', label: 'Upcoming Events', icon: Calendar },
-          { path: '/guest/map', label: 'Campus Map', icon: MapPin },
         ];
     }
   };
