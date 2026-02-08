@@ -4,6 +4,8 @@ const chatController = require('../controllers/chatController');
 const { protect } = require('../middleware/authMiddleware');
 
 router.post('/', protect, chatController.sendMessage);
+router.post('/guest', chatController.guestMessage); // Public guest route
+router.post('/feedback', protect, chatController.submitFeedback);
 router.get('/history', protect, chatController.getChatHistory);
 router.get('/session/:sessionId', protect, chatController.getSession);
 
