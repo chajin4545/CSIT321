@@ -58,6 +58,10 @@ const chatSessionSchema = mongoose.Schema(
           type: Boolean,
           default: false,
         },
+        response_time: {
+          type: Number, // Time in ms taken to generate this response (for bot messages)
+          default: 0
+        }
       },
     ],
   },

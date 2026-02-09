@@ -1,31 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Search, Plus, ArrowLeft, AlertTriangle } from 'lucide-react';
 import Header from '../../components/common/Header';
+import { useAuth } from '../../context/AuthContext';
 
 const Accounts = () => {
   const { setMobileMenuOpen } = useOutletContext();
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState('list'); // 'list', 'create'
-  const [users, setUsers] = useState([
-    { id: 'ADM001', name: 'School Admin 1', email: 'admin1@uowmail.edu.au', role: 'School Admin', status: 'Active', phone: '8123-1234', address: 'test street 123'  },
-    { id: 'ADM002', name: 'School Admin 2', email: 'admin2@uowmail.edu.au', role: 'School Admin', status: 'Active', phone: '8123-1234', address: 'test street 123'  },
-    { id: 'ADM003', name: 'School Admin 3', email: 'admin3@uowmail.edu.au', role: 'School Admin', status: 'Inactive', phone: '8123-1234', address: 'test street 123'  }
-  ]);
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmModal, setConfirmModal] = useState(null); // stores user ID to confirm
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
   // Form state for creating new admin
   const [formData, setFormData] = useState({ 
-    id: 'ADM-2024-X', 
-    role: 'School Admin', 
+    id: 'AUTO', 
+    role: 'school_admin', 
     name: '', 
     email: '', 
     phone: '', 
     address: '' 
   });
 
-  const handleToggleStatus = (id) => {
-    setUsers(users.map(u => u.id === id ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' } : u));
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/sys-admin/accounts', {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Map backend fields to frontend expectations if needed
+        const mapped = data.map(u => ({
+            id: u.user_id,
+            name: u.full_name,
+            email: u.email,
+            role: 'School Admin',
+            status: u.status === 'active' ? 'Active' : 'Inactive',
+            phone: u.phone,
+            address: u.address,
+            _id: u._id
+        }));
+        setUsers(mapped);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [user.token]);
+
+  const handleToggleStatus = async (id) => {
+    // Optimistic update
+    const userToToggle = users.find(u => u.id === id);
+    if (!userToToggle) return;
+
+    try {
+        const response = await fetch(`/api/sys-admin/accounts/${id}/toggle`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${user.token}` }
+        });
+        
+        if (response.ok) {
+            fetchUsers(); // Refresh to be safe
+        }
+    } catch (err) {
+        console.error("Failed to toggle", err);
+    }
     setConfirmModal(null);
   };
 
@@ -39,19 +86,50 @@ const Accounts = () => {
 
   const handleCreateClick = () => {
     setFormData({ 
-      id: `ADM-${Math.floor(Math.random() * 10000)}`, // Simulate auto-populate
-      role: 'School Admin', 
+      id: 'AUTO', 
+      role: 'school_admin', 
       name: '', 
       email: '', 
       phone: '', 
       address: '' 
     });
+    setError('');
     setViewMode('create');
   };
 
+  const handleCreateSubmit = async () => {
+    setError('');
+    if (!formData.name || !formData.email) {
+        setError('Name and Email are required.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/sys-admin/accounts', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user.token}` 
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+            await fetchUsers();
+            setViewMode('list');
+        } else {
+            const data = await response.json();
+            setError(data.message || 'Failed to create admin');
+        }
+    } catch (err) {
+        setError('Network error');
+    }
+  };
+
   const handleEdit = (user) => {
-    setFormData(user);
-    setViewMode('edit');
+    // Not implemented fully on backend yet (Update), but we can just show the form populated
+    // For now, let's keep it simple as requested: Create & Toggle.
+    alert("Edit feature coming soon. Please deactivate and create a new account if details are wrong.");
   };
 
   const filteredUsers = users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -109,6 +187,7 @@ const Accounts = () => {
                 </button>
               </div>
             </div>
+            {loading ? <p className="p-4 text-center text-slate-500">Loading...</p> : (
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                 <tr>
@@ -149,6 +228,7 @@ const Accounts = () => {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         </div>
         );
@@ -164,13 +244,16 @@ const Accounts = () => {
               </button>
             </div>
             <h2 className="text-2xl font-bold text-slate-800 mb-6">Create School Admin Account</h2>
+            
+            {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
+
             <form className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-500 mb-2">Role</label>
                   <input 
                     type="text" 
-                    value={formData.role} 
+                    value="School Admin"
                     disabled 
                     className="w-full p-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed font-medium"
                   />
@@ -179,7 +262,7 @@ const Accounts = () => {
                   <label className="block text-sm font-medium text-slate-500 mb-2">User ID (Auto-generated)</label>
                   <input 
                     type="text" 
-                    value={formData.id} 
+                    value="AUTO"
                     disabled 
                     className="w-full p-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed font-mono" 
                   />
@@ -190,9 +273,10 @@ const Accounts = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
                 <input
                   type="text"
-                  defaultValue={formData.name}
-                  className={`w-full p-3 border rounded-lg focus:outline-none 'bg-white border-slate-300 text-slate-800 focus:ring-2 focus:ring-blue-500'
-                    }`}
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="e.g. John Doe"
                 />
               </div>
     
@@ -200,7 +284,8 @@ const Accounts = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
                 <input 
                   type="email" 
-                  defaultValue={formData.email}
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                   className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
                   placeholder="admin@uowmail.edu.au"
                 />
@@ -210,7 +295,8 @@ const Accounts = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
                 <input 
                   type="tel" 
-                  defaultValue={formData.phone}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
                   placeholder="8123-1234"
                 />
@@ -220,7 +306,8 @@ const Accounts = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-2">Address</label>
                 <input 
                   type="text" 
-                  defaultValue={formData.address}
+                  value={formData.address}
+                  onChange={(e) => setFormData({...formData, address: e.target.value})}
                   className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
                   placeholder="123 test street"
                 />
@@ -229,7 +316,7 @@ const Accounts = () => {
               <div className="flex justify-end pt-4">
                 <button 
                   type="button"
-                  onClick={() => setViewMode('list')}
+                  onClick={handleCreateSubmit}
                   className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 shadow-md"
                 >
                   Create Account

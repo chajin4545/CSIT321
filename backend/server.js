@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const schoolAdminRoutes = require('./routes/schoolAdminRoutes');
+const sysAdminRoutes = require('./routes/sysAdminRoutes');
 const professorRoutes = require('./routes/professorRoutes');
 
 connectDB();
@@ -32,6 +33,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/school-admin', schoolAdminRoutes);
+app.use('/api/sys-admin', sysAdminRoutes);
 app.use('/api/professor', professorRoutes);
 
 app.get('/', (req, res) => {

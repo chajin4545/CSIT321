@@ -152,10 +152,14 @@ IMPORTANT DOMAIN RULES:
     const aiResponse = await chatService.generateResponse(openAIMessages, userId, requestId, false, session.type);
     
     // 6. Add Bot Message to DB
+    const lastMsg = session.messages[session.messages.length - 1];
+    const responseTime = lastMsg ? (Date.now() - lastMsg.timestamp.getTime()) : 0;
+
     session.messages.push({
       sender: 'bot',
       content: aiResponse.content,
-      timestamp: new Date()
+      timestamp: new Date(),
+      response_time: responseTime
     });
 
     // 7. Save Session
@@ -275,10 +279,14 @@ RULES:
     const aiResponse = await chatService.generateResponse(openAIMessages, 'guest', requestId, true);
 
     // 6. Save & Respond
+    const lastMsg = session.messages[session.messages.length - 1];
+    const responseTime = lastMsg ? (Date.now() - lastMsg.timestamp.getTime()) : 0;
+
     session.messages.push({
       sender: 'bot',
       content: aiResponse.content,
-      timestamp: new Date()
+      timestamp: new Date(),
+      response_time: responseTime
     });
     session.last_active = Date.now();
     await session.save();
