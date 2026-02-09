@@ -1,10 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Users, Activity, MessageCircle, Clock, BarChart } from 'lucide-react';
 import Header from '../../components/common/Header';
+import { useAuth } from '../../context/AuthContext';
 
 const Dashboard = () => {
   const { setMobileMenuOpen } = useOutletContext();
+  const { user } = useAuth();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    dailyActiveUsers: 0,
+    totalConversations: 0,
+    avgResponseTime: '0s'
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/sys-admin/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [user.token]);
 
   return (
     <div className="flex flex-col h-full">
@@ -13,10 +44,10 @@ const Dashboard = () => {
         <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {[
-                { label: 'Total Users', value: '1,240', icon: Users, color: 'bg-blue-500' },
-                { label: 'Daily Active Users (Today)', value: '850', icon: Activity, color: 'bg-green-500' },
-                { label: 'Total Conversations (Today)', value: '3,402', icon: MessageCircle, color: 'bg-purple-500' },
-                { label: 'AVG Response Time', value: '0.4s', icon: Clock, color: 'bg-orange-500' },
+                { label: 'Total Users', value: loading ? '...' : stats.totalUsers, icon: Users, color: 'bg-blue-500' },
+                { label: 'Daily Active Users (Today)', value: loading ? '...' : stats.dailyActiveUsers, icon: Activity, color: 'bg-green-500' },
+                { label: 'Total Conversations (Today)', value: loading ? '...' : stats.totalConversations, icon: MessageCircle, color: 'bg-purple-500' },
+                { label: 'AVG Response Time', value: loading ? '...' : stats.avgResponseTime, icon: Clock, color: 'bg-orange-500' },
             ].map((stat, idx) => (
                 <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <div className="flex justify-between items-start">
