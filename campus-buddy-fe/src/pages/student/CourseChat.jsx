@@ -34,6 +34,22 @@ const CourseChat = () => {
     fetchHistory();
   }, []);
 
+  // Sync selected module with history
+  useEffect(() => {
+    if (selectedModule && history.length > 0) {
+      const existingSession = history.find(h => h.related_module_code === selectedModule);
+      if (existingSession && existingSession.session_id !== currentSessionId) {
+        loadSession(existingSession.session_id);
+      } else if (!existingSession && currentSessionId) {
+        // Only reset if we are currently looking at a different session
+        // and switching to a module with no history
+        resetToNewChat();
+      }
+    } else if (selectedModule && history.length === 0 && currentSessionId) {
+       resetToNewChat();
+    }
+  }, [selectedModule, history]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -269,8 +285,16 @@ const CourseChat = () => {
               <select 
                 value={selectedModule}
                 onChange={(e) => {
-                  setSelectedModule(e.target.value);
-                  resetToNewChat(); // Clear session when switching modules
+                  const newModule = e.target.value;
+                  setSelectedModule(newModule);
+                  
+                  // Auto-load existing session for this module if available
+                  const existingSession = history.find(h => h.related_module_code === newModule);
+                  if (existingSession) {
+                    loadSession(existingSession.session_id);
+                  } else {
+                    resetToNewChat();
+                  }
                 }}
                 className="bg-slate-100 border-none text-sm font-medium rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-sm"
               >

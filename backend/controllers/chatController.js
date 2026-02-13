@@ -134,7 +134,11 @@ IMPORTANT DOMAIN RULES:
 7. **LINKS & FORMATTING**:
    - ALWAYS provide links in Markdown format: [Link Text](URL).
    - When providing the payment guide, ensure [SIMConnect](https://simconnect.simge.edu.sg/) is a clickable link.
-   - Use bold text for amounts and due dates to make them stand out.`;
+   - Use bold text for amounts and due dates to make them stand out.
+8. **EVENTS vs SCHEDULE**:
+   - If the user asks about "my schedule", "classes", or "exams", use 'get_my_schedule'.
+   - If the user asks about "school events", "campus events", "what is happening", or "activities", use 'get_public_events'.
+   - Do not confuse the two.`;
     }
 
     const openAIMessages = [

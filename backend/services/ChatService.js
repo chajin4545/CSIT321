@@ -189,7 +189,7 @@ const generateResponse = async (messages, userId, requestId = 'UNKNOWN', isGuest
       availableTools = TOOLS.filter(t => tutorTools.includes(t.function.name));
     } else {
       // Admin Support (Default) - Everything except specialized course tools
-      const adminTools = ['get_student_profile', 'get_enrolled_modules', 'get_my_schedule', 'get_module_info', 'get_my_payments'];
+      const adminTools = ['get_student_profile', 'get_enrolled_modules', 'get_my_schedule', 'get_module_info', 'get_my_payments', 'get_public_events'];
       availableTools = TOOLS.filter(t => adminTools.includes(t.function.name));
     }
 
