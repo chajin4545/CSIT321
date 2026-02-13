@@ -292,7 +292,102 @@ const get_my_payments = async ({ user_id, requestId = 'tool' }) => {
 };
 
 /**
- * Tool: search_course_materials
+ * // TutorChat - Tool: list_course_materials
+ * ---------------------------
+ * Lists available course materials (files) for a module.
+ * Used to get an overview of what's available before reading or searching.
+ * 
+ * @param {Object} params
+ * @param {string} params.module_code
+ * @param {string} [params.category] - Optional filter (e.g., 'Lecture Notes', 'Labs', 'Assignments')
+ * @param {string} [params.requestId]
+ * @returns {Array<Object>} List of file metadata.
+ */
+const list_course_materials = async ({ module_code, category, requestId = 'tool' }) => {
+  try {
+    console.log(`[ChatTools] [${requestId}] list_course_materials: Listing for ${module_code} (Category: ${category || 'All'})`);
+    
+    const module = await Module.findOne({ module_code });
+    if (!module) {
+      return { error: `Module ${module_code} not found.` };
+    }
+
+    let materials = module.materials;
+    if (category) {
+      // Case-insensitive category match
+      const catRegex = new RegExp(category, 'i');
+      materials = materials.filter(m => catRegex.test(m.category));
+    }
+
+    if (!materials || materials.length === 0) {
+      return { message: "No materials found." };
+    }
+
+    return materials.map(m => ({
+      title: m.title,
+      category: m.category,
+      type: m.mime_type,
+      has_content: !!m.text_content
+    }));
+
+  } catch (error) {
+    console.error(`[ChatTools] [${requestId}] list_course_materials Error: ${error.message}`);
+    return { error: error.message };
+  }
+};
+
+/**
+ * // TutorChat - Tool: read_material_content
+ * ---------------------------
+ * Retrieves the full text content of a specific file.
+ * Used when the AI needs to "read" a file to summarize it or extract specific details.
+ * 
+ * @param {Object} params
+ * @param {string} params.module_code
+ * @param {string} params.file_title - The title of the file to read (approximate match).
+ * @param {string} [params.requestId]
+ * @returns {Object} Text content of the file.
+ */
+const read_material_content = async ({ module_code, file_title, requestId = 'tool' }) => {
+  try {
+    console.log(`[ChatTools] [${requestId}] read_material_content: Reading '${file_title}' in ${module_code}`);
+    
+    const module = await Module.findOne({ module_code });
+    if (!module) {
+      return { error: `Module ${module_code} not found.` };
+    }
+
+    // Find material by title (case-insensitive partial match)
+    const titleRegex = new RegExp(file_title, 'i');
+    const material = module.materials.find(m => titleRegex.test(m.title));
+
+    if (!material) {
+      return { error: `File '${file_title}' not found.` };
+    }
+
+    if (!material.text_content) {
+      return { message: "This file has no readable text content (it might be an image or scanned PDF)." };
+    }
+
+    // Truncate if too long (approx 15k chars is safe for GPT-4o-mini context)
+    const content = material.text_content.length > 15000 
+      ? material.text_content.substring(0, 15000) + "... [Truncated]"
+      : material.text_content;
+
+    return {
+      title: material.title,
+      category: material.category,
+      content: content
+    };
+
+  } catch (error) {
+    console.error(`[ChatTools] [${requestId}] read_material_content Error: ${error.message}`);
+    return { error: error.message };
+  }
+};
+
+/**
+ * // TutorChat - Tool: search_course_materials
  * -----------------------------
  * Searches the extracted text content of uploaded course materials.
  * Used for Course Tutor queries like "What does the lecture say about recursion?".
@@ -300,12 +395,13 @@ const get_my_payments = async ({ user_id, requestId = 'tool' }) => {
  * @param {Object} params
  * @param {string} params.module_code - The module to search in.
  * @param {string} params.query - The search keyword/phrase.
+ * @param {string} [params.category] - Optional category filter.
  * @param {string} [params.requestId]
  * @returns {Array<Object>} List of matching text snippets from materials.
  */
-const search_course_materials = async ({ module_code, query, requestId = 'tool' }) => {
+const search_course_materials = async ({ module_code, query, category, requestId = 'tool' }) => {
   try {
-    console.log(`[ChatTools] [${requestId}] search_course_materials: Searching '${query}' in ${module_code}`);
+    console.log(`[ChatTools] [${requestId}] search_course_materials: Searching '${query}' in ${module_code} (Category: ${category || 'All'})`);
     
     if (!module_code || !query) {
       return { error: "Missing module_code or query." };
@@ -316,10 +412,16 @@ const search_course_materials = async ({ module_code, query, requestId = 'tool' 
       return { error: `Module ${module_code} not found.` };
     }
 
-    const results = [];
+    let results = [];
     const searchRegex = new RegExp(query, 'i'); // Case-insensitive
+    const catRegex = category ? new RegExp(category, 'i') : null;
 
     for (const material of module.materials) {
+      // Filter by category if provided
+      if (catRegex && !catRegex.test(material.category)) {
+        continue;
+      }
+
       if (material.text_content && searchRegex.test(material.text_content)) {
         // Find the index of the match
         const matchIndex = material.text_content.search(searchRegex);
@@ -359,5 +461,7 @@ module.exports = {
   get_module_info,
   get_my_payments,
   get_public_events,
+  list_course_materials,
+  read_material_content,
   search_course_materials
 };

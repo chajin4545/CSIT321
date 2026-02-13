@@ -74,7 +74,7 @@ const CourseChat = () => {
         if (data.length > 0 && !currentSessionId) {
           // Find the first course_tutor session or stay on new chat
           const firstTutorSession = data.find(s => s.type === 'course_tutor');
-          // if (firstTutorSession) loadSession(firstTutorSession.session_id);
+          if (firstTutorSession) loadSession(firstTutorSession.session_id);
         }
       }
     } catch (error) {
@@ -92,8 +92,8 @@ const CourseChat = () => {
         const data = await response.json();
         setCurrentSessionId(data.sessionId);
         setMessages(data.messages);
-        // If the session has a related module, update selector (need backend to return this)
-        // if (data.relatedModuleCode) setSelectedModule(data.relatedModuleCode);
+        // If the session has a related module, update selector
+        if (data.relatedModuleCode) setSelectedModule(data.relatedModuleCode);
       }
     } catch (error) {
       console.error("Failed to load session:", error);
@@ -228,6 +228,7 @@ const CourseChat = () => {
                 >
                 <div className="w-full text-left p-4 pr-10">
                     <div className={`text-sm font-medium truncate ${currentSessionId === item.session_id ? 'text-blue-700' : 'text-slate-800'}`}>
+                      {item.related_module_code ? <span className="font-bold mr-1 text-xs bg-orange-100 text-orange-800 px-1 rounded">{item.related_module_code}</span> : null}
                       {item.title || 'New Study Session'}
                     </div>
                     <div className="text-xs text-slate-400 mt-1">{formatDate(item.last_active)}</div>

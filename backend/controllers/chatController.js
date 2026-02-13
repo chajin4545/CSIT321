@@ -95,6 +95,7 @@ const sendMessage = async (req, res) => {
 
     let systemPromptContent = "";
 
+    // TutorChat - Specialized System Prompt
     if (session.type === 'course_tutor') {
       systemPromptContent = `You are a specialized Course Tutor for the module ${session.related_module_code || 'Unknown'}.
       
@@ -102,13 +103,15 @@ CURRENT DATE: ${currentDate}
 
 STRICT INSTRUCTIONS:
 1. Your goal is to answer student questions based ONLY on the provided course materials (Lecture notes, labs, assignments).
-2. You MUST use the 'search_course_materials' tool to find answers. 
-   - Call this tool with the module_code '${session.related_module_code}' and the user's query keywords.
-3. If the tool returns relevant text snippets, answer the question using that information.
-4. If the tool returns NO matches or the matches are irrelevant, you MUST reply:
-   "I'm sorry, I couldn't find the answer to that in the provided course materials for ${session.related_module_code}."
-5. DO NOT hallucinate or use outside knowledge to answer specific curriculum questions.
-6. Be helpful, encouraging, and academic in tone.`;
+2. **Retrieval Strategy**:
+   - **Discovery**: If you don't know what files exist, or the user asks "What is this module about?" or "List assignments", ALWAYS use \`list_course_materials\` first.
+   - **Deep Reading**: To summarize a document or answer broad questions (e.g., "Summarize Lecture 1", "What is Assignment 1 about?"), use \`read_material_content\` to get the full text.
+   - **Fact Checking**: For specific lookups (e.g., "When is the deadline?", "What is the definition of recursion?"), use \`search_course_materials\`.
+3. **Category Filtering**: If the user mentions a specific category (e.g., "in the labs", "any assignments?"), ALWAYS pass the 'category' parameter to the tools ('Labs', 'Assignments', 'Lecture Notes').
+4. **Transparency**: 
+   - If a file exists but doesn't contain the requested info (e.g., an assignment file has no due date), explicitly say: "I checked [Filename], but it does not mention a due date."
+   - DO NOT hallucinate info not present in the text.
+5. Be helpful, encouraging, and academic in tone.`;
     } else {
       // Default: Admin Support
       systemPromptContent = `You are an intelligent assistant for CampusBuddy, helping students of SIM UOW (University of Wollongong).
@@ -313,7 +316,7 @@ const getChatHistory = async (req, res) => {
     const userId = req.user.user_id;
     // Sort by last_active descending to show most recent chats first
     const history = await ChatSession.find({ user_id: userId })
-      .select('session_id title last_active')
+      .select('session_id title last_active type related_module_code')
       .sort({ last_active: -1 });
 
     res.json(history);
@@ -351,6 +354,8 @@ const getSession = async (req, res) => {
     res.json({
       sessionId: session.session_id,
       title: session.title,
+      type: session.type,
+      relatedModuleCode: session.related_module_code,
       messages: formattedMessages
     });
   } catch (error) {

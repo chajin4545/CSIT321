@@ -106,8 +106,38 @@ const TOOLS = [
   {
     type: "function",
     function: {
+      name: "list_course_materials",
+      description: "List all available files (Lecture Notes, Labs, Assignments) for a module. Use this first to see what topics are covered.",
+      parameters: {
+        type: "object",
+        properties: {
+          module_code: { type: "string", description: "The module code, e.g., 'CSIT321'" },
+          category: { type: "string", description: "Optional filter: 'Lecture Notes', 'Labs', 'Assignments'" }
+        },
+        required: ["module_code"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_material_content",
+      description: "Read the full text content of a specific file. Use this to summarize a lecture or get details on an assignment found via 'list_course_materials'.",
+      parameters: {
+        type: "object",
+        properties: {
+          module_code: { type: "string" },
+          file_title: { type: "string", description: "The title of the file to read (from the list)." }
+        },
+        required: ["module_code", "file_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "search_course_materials",
-      description: "Search within the uploaded course materials (PDFs, docs) for answers. Use this when the user asks a question about the course content.",
+      description: "Search for specific keywords across all course materials. Use this for specific fact-checking (e.g., 'deadline', 'recursion').",
       parameters: {
         type: "object",
         properties: {
@@ -119,6 +149,10 @@ const TOOLS = [
             type: "string",
             description: "The search keywords or phrase.",
           },
+          category: {
+             type: "string",
+             description: "Optional category filter: 'Lecture Notes', 'Labs', 'Assignments'"
+          }
         },
         required: ["module_code", "query"],
       },
@@ -150,11 +184,13 @@ const generateResponse = async (messages, userId, requestId = 'UNKNOWN', isGuest
       // Guests only get public events
       availableTools = TOOLS.filter(t => t.function.name === 'get_public_events');
     } else if (chatType === 'course_tutor') {
-      // Course Tutor only searches materials
-      availableTools = TOOLS.filter(t => t.function.name === 'search_course_materials');
+      // Course Tutor gets material-related tools
+      const tutorTools = ['list_course_materials', 'read_material_content', 'search_course_materials'];
+      availableTools = TOOLS.filter(t => tutorTools.includes(t.function.name));
     } else {
-      // Admin Support (Default) - Everything except specialized course search and guest events
-      availableTools = TOOLS.filter(t => t.function.name !== 'search_course_materials' && t.function.name !== 'get_public_events');
+      // Admin Support (Default) - Everything except specialized course tools
+      const adminTools = ['get_student_profile', 'get_enrolled_modules', 'get_my_schedule', 'get_module_info', 'get_my_payments'];
+      availableTools = TOOLS.filter(t => adminTools.includes(t.function.name));
     }
 
     // Create a mutable copy of messages to append tool inputs/outputs during the loop
@@ -220,10 +256,23 @@ const generateResponse = async (messages, userId, requestId = 'UNKNOWN', isGuest
             toolResult = await chatTools.get_my_payments({ user_id: userId, requestId });
           } else if (functionName === 'get_public_events') {
             toolResult = await chatTools.get_public_events({ requestId });
+          } else if (functionName === 'list_course_materials') {
+            toolResult = await chatTools.list_course_materials({ 
+              module_code: functionArgs.module_code, 
+              category: functionArgs.category, 
+              requestId 
+            });
+          } else if (functionName === 'read_material_content') {
+            toolResult = await chatTools.read_material_content({ 
+              module_code: functionArgs.module_code, 
+              file_title: functionArgs.file_title, 
+              requestId 
+            });
           } else if (functionName === 'search_course_materials') {
             toolResult = await chatTools.search_course_materials({ 
               module_code: functionArgs.module_code, 
               query: functionArgs.query, 
+              category: functionArgs.category,
               requestId 
             });
           } else {

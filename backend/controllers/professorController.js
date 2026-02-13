@@ -87,7 +87,7 @@ const uploadMaterial = async (req, res) => {
     let extractedText = '';
 
     if (req.file) {
-      // 1. Extract text locally if PDF
+      // 1. Extract text locally if PDF or TXT
       if (req.file.mimetype === 'application/pdf') {
         try {
           const dataBuffer = fs.readFileSync(req.file.path);
@@ -95,6 +95,12 @@ const uploadMaterial = async (req, res) => {
           extractedText = data.text;
         } catch (parseError) {
           console.error('Error parsing PDF:', parseError);
+        }
+      } else if (req.file.mimetype === 'text/plain') {
+        try {
+          extractedText = fs.readFileSync(req.file.path, 'utf8');
+        } catch (readError) {
+          console.error('Error reading text file:', readError);
         }
       }
 

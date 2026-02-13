@@ -80,10 +80,11 @@ const AdminChat = () => {
         console.log("Fetched history:", data); // Debug log
         setHistory(data);
         
-        // UX Decision: Auto-load the latest chat if available, else show "New Chat" state
-        if (data.length > 0 && !currentSessionId) {
-          loadSession(data[0].session_id);
-        } else if (data.length === 0) {
+        // UX Decision: Auto-load the latest admin chat if available, else show "New Chat" state
+        const adminChats = data.filter(chat => chat.type === 'admin_support');
+        if (adminChats.length > 0 && !currentSessionId) {
+          loadSession(adminChats[0].session_id);
+        } else {
           resetToNewChat();
         }
       }
@@ -313,7 +314,7 @@ const AdminChat = () => {
             {history.length === 0 && (
               <div className="p-4 text-center text-slate-400 text-sm italic">No history yet. Start a chat!</div>
             )}
-            {history.map(item => (
+            {history.filter(item => item.type === 'admin_support').map(item => (
                 <div 
                   key={item._id || item.session_id} 
                   className={`relative group border-b border-slate-50 transition-colors cursor-pointer ${currentSessionId === item.session_id ? 'bg-blue-50 border-blue-100' : 'hover:bg-slate-50'}`}
