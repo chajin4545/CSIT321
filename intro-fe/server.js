@@ -13,7 +13,6 @@ const backendPath = path.join(__dirname, 'backend');
 if (fs.existsSync(path.join(backendPath, 'config', 'db.js'))) {
     console.log("Found backend module, initializing...");
     const connectDB = require(path.join(backendPath, 'config', 'db.js'));
-    const authRoutes = require(path.join(backendPath, 'routes', 'authRoutes'));
     
     // Connect to MongoDB
     connectDB();
@@ -24,13 +23,37 @@ const port = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // API Routes (if backend exists)
 if (fs.existsSync(path.join(backendPath, 'routes', 'authRoutes.js'))) {
+    console.log("Mounting API Routes from:", backendPath);
     const authRoutes = require(path.join(backendPath, 'routes', 'authRoutes'));
+    const chatRoutes = require(path.join(backendPath, 'routes', 'chatRoutes'));
+    const schoolAdminRoutes = require(path.join(backendPath, 'routes', 'schoolAdminRoutes'));
+    const sysAdminRoutes = require(path.join(backendPath, 'routes', 'sysAdminRoutes'));
+    const professorRoutes = require(path.join(backendPath, 'routes', 'professorRoutes'));
+
     app.use('/api/auth', authRoutes);
-    console.log("API Routes mounted at /api/auth");
+    app.use('/api/chat', chatRoutes);
+    app.use('/api/school-admin', schoolAdminRoutes);
+    app.use('/api/sys-admin', sysAdminRoutes);
+    app.use('/api/professor', professorRoutes);
+    
+    // Serve uploaded files if directory exists
+    const uploadsPath = path.join(backendPath, 'uploads');
+    if (fs.existsSync(uploadsPath)) {
+        app.use('/uploads', express.static(uploadsPath));
+    }
+    
+    console.log("Full API Routes mounted successfully");
 }
+
+// Global error handler for API routes
+app.use('/api', (err, req, res, next) => {
+  console.error('API Error:', err.stack);
+  res.status(500).json({ message: 'Internal Server Error', error: err.message });
+});
 
 // Where Expo exports the web build. Prefer 'dist' (modern output),
 // fall back to 'web-build' (older Expo versions), and allow overriding
