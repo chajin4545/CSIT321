@@ -77,8 +77,46 @@ const get_student_profile = async ({ user_id, requestId = 'tool' }) => {
       return { error: "User not found" };
     }
     
-    console.log(`[ChatTools] [${requestId}] get_student_profile: Found user ${user.full_name}`);
+    console.log(`[ChatTools] [${requestId}] get_student_profile: Found user ${user.full_name}. Calculating WAM...`);
+
+    // Dynamic WAM Calculation
+    // 1. Fetch all enrollments for the user
+    const enrollments = await Enrollment.find({ student_id: user_id });
     
+    let totalWeightedMarks = 0;
+    let totalCredits = 0;
+
+    // 2. Iterate through enrollments to calculate weighted average
+    for (const enr of enrollments) {
+      // We need the module credits
+      const module = await Module.findOne({ module_code: enr.module_code });
+      if (!module) continue;
+
+      let mark = null;
+      
+      // Priority: Final > Overall (if numeric) > Midterm (Fallback)
+      if (enr.grades?.final !== undefined) {
+        mark = enr.grades.final;
+      } else if (enr.grades?.overall && !isNaN(enr.grades.overall)) {
+        mark = Number(enr.grades.overall);
+      } else if (enr.grades?.midterm !== undefined) {
+        // Optional: Include midterm if that's the only grade available so far
+        mark = enr.grades.midterm;
+      }
+
+      // Only include if we have a valid mark and credits
+      if (mark !== null && module.credits > 0) {
+        totalWeightedMarks += (mark * module.credits);
+        totalCredits += module.credits;
+      }
+    }
+
+    const calculatedWAM = totalCredits > 0 
+      ? Number((totalWeightedMarks / totalCredits).toFixed(2)) 
+      : 0;
+
+    console.log(`[ChatTools] [${requestId}] get_student_profile: Calculated WAM: ${calculatedWAM} (Credits: ${totalCredits})`);
+
     // Return a subset of fields to minimize token usage while providing essential context
     return {
       user_id: user.user_id,
@@ -86,7 +124,7 @@ const get_student_profile = async ({ user_id, requestId = 'tool' }) => {
       email: user.email,
       role: user.role,
       status: user.status,
-      wam: user.wam
+      wam: calculatedWAM // Return the dynamically calculated value
     };
   } catch (error) {
     console.error(`[ChatTools] [${requestId}] get_student_profile Error: ${error.message}`);

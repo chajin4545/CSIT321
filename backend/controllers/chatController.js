@@ -138,7 +138,20 @@ IMPORTANT DOMAIN RULES:
 8. **EVENTS vs SCHEDULE**:
    - If the user asks about "my schedule", "classes", or "exams", use 'get_my_schedule'.
    - If the user asks about "school events", "campus events", "what is happening", or "activities", use 'get_public_events'.
-   - Do not confuse the two.`;
+   - Do not confuse the two.
+9. **LOCATIONS & DIRECTIONS**:
+   - If a user asks for directions or how to get to a specific venue/event, you MUST:
+     - Provide this link: [SIM Campus Facilities](https://www.sim.edu.sg/degrees-diplomas/life-at-sim/campus-facilities)
+     - Ask the user to check the **Virtual Map** available on that page for detailed navigation.
+10. **MODULE ENROLLMENT**:
+    - If a user asks how to enroll in a new module, add a module, or change their enrollment, you MUST:
+      - Direct them to the [UOW SOLS Portal](https://solss.uow.edu.au/).
+      - Instruct them to login and navigate to **Enrolment > Enrolment and Variation**.
+11. **FALLBACK / UNKNOWN QUERIES**:
+    - If you cannot answer a student's question based on your tools or knowledge, you MUST politely apologize and direct them to Student Services:
+      - "I'm sorry, I don't have that information. Please contact Student Services for assistance:"
+      - Email: [students@sim.edu.sg](mailto:students@sim.edu.sg)
+      - Phone: **+65 6248 9393**`;
     }
 
     const openAIMessages = [

@@ -1,0 +1,27 @@
+# VIDEO SCRIPT: GUEST EXPERIENCE
+# Role: Perspective Student / Guest
+# Tone: Welcoming and informative
+
+[SCENE 1: LANDING PAGE (intro-fe)]
+"Welcome to CampusBuddy, the all-in-one companion for the SIM UOW experience. 
+As a guest or prospective student, you can explore what life on campus is like right from our mobile-friendly landing page. 
+Here, we have quick access to documentation and exploration tools."
+
+[SCENE 2: GUEST DASHBOARD (campus-buddy-fe)]
+"By clicking 'Get Started', we enter the Guest Dashboard. 
+On the Home tab, we get a quick overview of campus life. 
+If we're planning a visit, the 'Map' section provides a direct link to the SIM Campus Facilities, including a Virtual Map for easy navigation."
+
+[SCENE 3: EVENTS]
+"Curious about what's happening? The Events page lists all upcoming public activities, from career fairs to student club workshops. 
+It’s a great way to see the vibrant community here at SIM."
+
+[SCENE 4: GUEST CHATBOT (Crucial Functionality)]
+"Now, let’s look at the Guest Assistant. This AI-powered chatbot is here to answer your immediate questions.
+For example, I can ask: 'What events are happening next week?'
+The AI uses our real-time database to pull upcoming public events, providing dates and venues instantly.
+I can also ask about the application process: 'How do I apply for SIM UOW?'
+Notice how the assistant provides direct links to the official programme details and instructions on using the 'Apply Now' button.
+If I ask something personal, like 'What is my grade?', the AI correctly identifies that I'm a guest and prompts me to log in for personalized features.
+Guests can ask up to 5 questions in a 4-hour window, giving you just enough help to get started with your journey at SIM."
+
