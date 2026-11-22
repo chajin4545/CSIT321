@@ -40,5 +40,3 @@ Now you have main branch with your new code implemented.
 
 delete your old branch to keep branches clean.
 ```git branch -d feature/login-button```
-
-Test
